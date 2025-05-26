@@ -1,6 +1,26 @@
 //#include <stdio.h>
+#include <stdint.h>
 #include <raylib.h>
 #include <raymath.h>
+#include <ecs.h>
+
+typedef Vector2 PositionComponent;
+typedef Vector2 VelocityComponent;
+typedef struct 
+{
+    Vector2 offset;
+    //Vector2 size;
+    Color color;
+} DrawRectangleComponent;
+typedef int StateFlagsComponent;
+
+
+const uint32_t CID_Position = 0;
+const uint32_t CID_Velocity = 1;
+const uint32_t CID_DrawRectangle = 2;
+const uint32_t CID_StateFlags = 3;
+//update Count accordingly
+const uint32_t CID_Count = 4;
 
 void DrawChessboard() 
 {
@@ -43,6 +63,62 @@ void DrawGun (Vector2 aimFrom, Vector2 aimDirection)
     );
 }
 
+void System_Move(float deltaTime) 
+{
+    uint32_t i;
+	QueryResult *qr = ecs_query(2, CID_Position, CID_Velocity);
+	for (i = 0; i < qr->count; ++i) {
+		PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
+		VelocityComponent *vel = (VelocityComponent*)ecs_get(qr->list[i], CID_Velocity);
+		pos->x += vel->x * deltaTime;
+		pos->y += vel->y * deltaTime;
+		/*if (pos->x > RENDER_WIDTH || pos->x < 0)
+			vel->x *= -1;
+		if (pos->y > RENDER_HEIGHT || pos->y < 0)
+			vel->y *= -1;*/
+	}
+}
+
+void System_Draw() 
+{
+    uint32_t i;
+	QueryResult *qr = ecs_query(2, CID_Position, CID_DrawRectangle);
+	for (i = 0; i < qr->count; ++i) {
+		PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
+		DrawRectangleComponent *rect = (DrawRectangleComponent*)ecs_get(qr->list[i], CID_DrawRectangle);
+		DrawPixelV(*pos, rect->color);
+	}
+}
+
+void System_ClearOutOfBounds() 
+{
+    uint32_t i;
+	QueryResult *qr = ecs_query(1, CID_Position);
+	for (i = 0; i < qr->count; ++i) {
+		PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
+		if (pos->x > 1000 
+	     || pos->x < 0
+	     || pos->y > 1000 
+	     || pos->y < 0
+	    ) ecs_kill(qr->list[i]);
+	}
+}
+
+void AddBullet(Vector2 aimFrom, Vector2 aimDirection) 
+{
+    Vector2 velocity = Vector2Scale(aimDirection, 16);
+    //aimFrom = Vector2Add(aimFrom, velocity);
+    
+    Entity e = ecs_create();
+    PositionComponent pos = aimFrom;
+    VelocityComponent vel = velocity;
+    DrawRectangleComponent rect = { Vector2Zero(), WHITE };
+    
+    ecs_add(e.id, CID_Position, &pos );
+    ecs_add(e.id, CID_Velocity, &vel );
+    ecs_add(e.id, CID_DrawRectangle, &rect );/**/
+}
+
 int main ()
 {
 	// Tell the window to use vsync and work on high DPI displays
@@ -56,6 +132,13 @@ int main ()
     Vector2 aimFromOffset = { 0, -playerSize.y / 2 };
     Vector2 aimDirection = { 0, 0 };
     float speed = 16 * 4;
+    
+    ecs_init(CID_Count, 
+        sizeof(PositionComponent), 
+        sizeof(VelocityComponent), 
+        sizeof(DrawRectangleComponent), 
+        sizeof(StateFlagsComponent)
+    );
 
 	// game loop
 	while (!WindowShouldClose())		// run the loop untill the user presses ESCAPE or presses the Close button on the window
@@ -77,6 +160,11 @@ int main ()
         
         aimDirection = Vector2Subtract(aimTo, aimFrom);
         aimDirection = Vector2Normalize(aimDirection);
+        
+        if (IsKeyDown(KEY_SPACE)) AddBullet(aimFrom, aimDirection);
+        
+        System_Move(delta);
+        //System_ClearOutOfBounds();
 
 		// Setup the back buffer for drawing (clear color and depth buffers)
 		ClearBackground(BLACK);
@@ -85,6 +173,8 @@ int main ()
 
 		DrawCharacter(playerPos, playerSize);
 		DrawGun(aimFrom, aimDirection);
+		
+        System_Draw();
 		
 		// end the frame and get ready for the next one  (display frame, poll input, etc...)
 		EndDrawing();
