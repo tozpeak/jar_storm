@@ -55,7 +55,7 @@ int main ()
     Vector2 playerSize = { 12, 24 };
     Vector2 aimFromOffset = { 0, -playerSize.y / 2 };
     Vector2 aimDirection = { 0, 0 };
-    float speed = 250;
+    float speed = 16 * 4;
 
 	// game loop
 	while (!WindowShouldClose())		// run the loop untill the user presses ESCAPE or presses the Close button on the window

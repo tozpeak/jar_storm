@@ -1,4 +1,4 @@
-.PHONY: dir clean debug_print
+.PHONY: dir clean
 
 # Project Settings
 debug ?= 0
@@ -108,15 +108,3 @@ clean:
 # Run bear to generate compile_commands.json
 #bear:
 #	bear --exclude $(LIB_DIR) make $(NAME)
-
-# Used to debug echo some internal variables of the makefile
-debug_print:
-	echo $(CFLAGS)
-
-# Build and run
-build_n_run: $(NAME)
-	$(BIN_DIR)/$<
-
-# restart: $(NAME)
-# $
-# kill $(ps aux | grep $(pwd)/bin/test_raylib | awk '{print $2}')
