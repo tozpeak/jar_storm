@@ -65,6 +65,8 @@ ecs_init(uint32_t n, ...)
 	state.entity_store.cap = INITIAL_CAPACITY;
 	state.entity_store.mask_array = malloc(INITIAL_CAPACITY * sizeof(uint32_t));
 	state.entity_store.flag_array = malloc(INITIAL_CAPACITY * sizeof(uint32_t));
+	
+    state.query_result.list = malloc(INITIAL_CAPACITY * sizeof(uint32_t));
 }
 
 Entity
