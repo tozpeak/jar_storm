@@ -20,6 +20,11 @@ typedef struct
     //Vector2 size;
     Color color;
 } DrawRectangleComponent;
+typedef struct
+{
+    short hp;
+    short maxHp;
+} HealthComponent;
 typedef int StateFlagsComponent;
 
 enum ComponentId
@@ -28,8 +33,11 @@ enum ComponentId
     CID_Velocity,
     CID_Collider,
     CID_DrawRectangle,
+    CID_Health,
     CID_StateFlags,
     CID_HasCollision,
+    CID_IsBullet,
+    CID_IsKilled,
     
     CID_Count
 };
@@ -151,6 +159,35 @@ void System_Collide(float deltaTime)
 	}
 }
 
+void System_DealDamage()
+{
+    uint32_t i;
+	QueryResult *qr = ecs_query(2, CID_Health, CID_HasCollision);
+	for (i = 0; i < qr->count; ++i) {
+		HealthComponent *hp = (HealthComponent*)ecs_get(qr->list[i], CID_Health);
+		hp->hp -= 4;
+		if(hp->hp <= 0) ecs_add(qr->list[i], CID_IsKilled, NULL);
+	}
+}
+
+void System_DestroyBullets()
+{
+    uint32_t i;
+	QueryResult *qr = ecs_query(2, CID_IsBullet, CID_HasCollision);
+	for (i = 0; i < qr->count; ++i) {
+		ecs_kill(qr->list[i]);
+	}
+}
+
+void System_DestroyKilled()
+{
+    uint32_t i;
+	QueryResult *qr = ecs_query(1, CID_IsKilled);
+	for (i = 0; i < qr->count; ++i) {
+		ecs_kill(qr->list[i]);
+	}
+}
+
 void System_Draw() 
 {
     uint32_t i;
@@ -162,6 +199,31 @@ void System_Draw()
 		
 		if(rect->radius < 0.1f) DrawPixelV(*pos, color);
 		else DrawCircleV(*pos, rect->radius, color);
+	}
+}
+
+void System_DrawEnemyHP() 
+{
+    Vector2 offset = { 0, 3 };
+    Vector2 right = { 1, 0 };
+    uint32_t i;
+	QueryResult *qr = ecs_query(2, CID_Position, CID_Health);
+	for (i = 0; i < qr->count; ++i) {
+		PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
+		HealthComponent *hp = (HealthComponent*)ecs_get(qr->list[i], CID_Health);
+		
+		float maxHp = hp->maxHp;
+		
+		float sizeFactor = 4 * log2(maxHp)/maxHp;
+		Vector2 lp = Vector2Add(
+		    Vector2Add(*pos, offset),
+		    Vector2Scale(right, - maxHp * sizeFactor / 2)
+	    );
+	    Vector2 rpFull = Vector2Add( lp, Vector2Scale(right, maxHp * sizeFactor) );
+	    Vector2 rpPart = Vector2Add( lp, Vector2Scale(right, hp->hp * sizeFactor) );
+	    
+	    DrawLineEx( lp, rpFull, 4, GRAY );
+	    DrawLineEx( lp, rpPart, 2, RED );
 	}
 }
 
@@ -204,7 +266,7 @@ void System_ClearCollisions()
 
 void AddBullet(Vector2 aimFrom, Vector2 aimDirection) 
 {
-    Vector2 velocity = Vector2Scale(aimDirection, 16);
+    Vector2 velocity = Vector2Scale(aimDirection, 16 * 16);
     //aimFrom = Vector2Add(aimFrom, velocity);
     
     Entity e = ecs_create();
@@ -217,19 +279,22 @@ void AddBullet(Vector2 aimFrom, Vector2 aimDirection)
     ecs_add(e.id, CID_Velocity, &vel );
     ecs_add(e.id, CID_DrawRectangle, &rect );
     ecs_add(e.id, CID_Collider, &col );
+    ecs_add(e.id, CID_IsBullet, NULL );
 }
 
-void AddPillar(Vector2 position) 
+void AddEnemy(Vector2 position) 
 {
-    float radius = 3.0f;
+    float radius = 6.0f;
     Entity e = ecs_create();
     PositionComponent pos = position;
     DrawRectangleComponent rect = { Vector2Zero(), radius, WHITE };
     ColliderComponent col = { radius , (Layer)LN_WALL };
+    HealthComponent hp = { 24, 32 };
     
     ecs_add(e.id, CID_Position, &pos );
     ecs_add(e.id, CID_DrawRectangle, &rect );
     ecs_add(e.id, CID_Collider, &col );
+    ecs_add(e.id, CID_Health, &hp );
 }
 
 int main ()
@@ -247,22 +312,25 @@ int main ()
     Vector2 playerSize = { 12, 24 };
     Vector2 aimFromOffset = { 0, -playerSize.y / 2 };
     Vector2 aimDirection = { 0, 0 };
-    float speed = 16 * 4;
+    float playerSpeed = 16 * 4;
     float shotCooldownState = 0;
-    float shotCooldown = 0.01f;
+    float shotCooldown = 0.05f;
     
     ecs_init(CID_Count, 
         sizeof(PositionComponent), 
         sizeof(VelocityComponent), 
         sizeof(ColliderComponent), 
-        sizeof(DrawRectangleComponent),      
+        sizeof(DrawRectangleComponent),
+        sizeof(HealthComponent),
         sizeof(StateFlagsComponent),
-        0 //CID_HasCollision
+        0, //CID_HasCollision
+        0, //CID_IsBullet
+        0 //CID_IsDead
     );
     
-    for (int i = 1; i < 16; i+=4) {
-        for (int j = 1; j < 16; j+=4) {
-            AddPillar((Vector2) { i * 16, j * 16 } );
+    for (int i = 1; i < 10; i++) {
+        for (int j = 1; j < 8; j++) {
+            AddEnemy((Vector2) { i * 16 * 4, j * 16 * 4 } );
         }
     }
 
@@ -271,7 +339,7 @@ int main ()
 	{
         float delta = GetFrameTime();
 
-        float dSpeed = speed * delta;
+        float dSpeed = playerSpeed * delta;
         
         if (IsKeyDown(KEY_D)) playerPos.x += dSpeed;
         if (IsKeyDown(KEY_A)) playerPos.x -= dSpeed;
@@ -294,6 +362,11 @@ int main ()
         System_Move(delta);
         System_ClearCollisions();
         System_Collide(delta);
+        
+        System_DealDamage();
+        
+        System_DestroyBullets();
+        System_DestroyKilled();
         System_ClearOutOfBounds();
         
 		// drawing
@@ -309,6 +382,8 @@ int main ()
 		
         System_Draw();
         System_DrawDebugCollisions();
+        
+        System_DrawEnemyHP();
         
         DrawFPS(1, 1);
         DrawText(
