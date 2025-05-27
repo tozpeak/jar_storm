@@ -1,5 +1,6 @@
 //#include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <math.h>
 #include <raylib.h>
 #include <raymath.h>
@@ -38,9 +39,18 @@ enum ComponentId
     CID_HasCollision,
     CID_IsBullet,
     CID_IsKilled,
+    CID_IsWanderer,
     
     CID_Count
 };
+
+typedef struct
+{
+    int width;
+    int height;
+} ScreenSettings;
+
+const ScreenSettings g_screenSettings = { 640, 480 };
 
 enum LayerName
 {
@@ -170,6 +180,28 @@ void System_DealDamage()
 	}
 }
 
+void System_EnemyWanderer(float deltaTime)
+{
+    const int CHANCE_SAMPLE_SIZE = 100000;
+    float changeDirProbabilityF = deltaTime * 1 / 5; // once in 5 seconds
+    int changeDirProbability = round(CHANCE_SAMPLE_SIZE * changeDirProbabilityF);
+    
+    uint32_t i;
+    QueryResult *qr = ecs_query(2, CID_Velocity, CID_IsWanderer);
+	for (i = 0; i < qr->count; ++i) {
+	    if (rand() % CHANCE_SAMPLE_SIZE > changeDirProbability) continue;
+	    
+		VelocityComponent *vel = (VelocityComponent*)ecs_get(qr->list[i], CID_Velocity);
+		
+		VelocityComponent newVel = Vector2Rotate(
+		    *vel,
+		    (rand() % 628) / 100.0f
+		);
+		
+		*vel = newVel;
+	}
+}
+
 void System_DestroyBullets()
 {
     uint32_t i;
@@ -247,9 +279,9 @@ void System_ClearOutOfBounds()
 	QueryResult *qr = ecs_query(1, CID_Position);
 	for (i = 0; i < qr->count; ++i) {
 		PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
-		if (pos->x > 1000 
+		if (pos->x > g_screenSettings.width 
 	     || pos->x < 0
-	     || pos->y > 1000 
+	     || pos->y > g_screenSettings.height
 	     || pos->y < 0
 	    ) ecs_kill(qr->list[i]);
 	}
@@ -287,14 +319,20 @@ void AddEnemy(Vector2 position)
     float radius = 6.0f;
     Entity e = ecs_create();
     PositionComponent pos = position;
+	VelocityComponent vel = Vector2Rotate(
+	    (Vector2) { 5, 0 },
+	    (rand() % 628) / 100.0f
+	);
     DrawRectangleComponent rect = { Vector2Zero(), radius, WHITE };
-    ColliderComponent col = { radius , (Layer)LN_WALL };
+    ColliderComponent col = { radius , (Layer)LN_ENEMY };
     HealthComponent hp = { 24, 32 };
     
     ecs_add(e.id, CID_Position, &pos );
+    ecs_add(e.id, CID_Velocity, &vel );
     ecs_add(e.id, CID_DrawRectangle, &rect );
     ecs_add(e.id, CID_Collider, &col );
     ecs_add(e.id, CID_Health, &hp );
+    ecs_add(e.id, CID_IsWanderer, NULL );
 }
 
 int main ()
@@ -304,7 +342,7 @@ int main ()
 	//SetTargetFPS(120);
 
 	// Create the window and OpenGL context
-	InitWindow(640, 480, "Hello Raylib");
+	InitWindow(g_screenSettings.width, g_screenSettings.height, "Hello Raylib");
 	
 	InitLayers();
     
@@ -325,7 +363,8 @@ int main ()
         sizeof(StateFlagsComponent),
         0, //CID_HasCollision
         0, //CID_IsBullet
-        0 //CID_IsDead
+        0, //CID_IsDead
+        0 //CID_IsWanderer
     );
     
     for (int i = 1; i < 10; i++) {
@@ -364,6 +403,7 @@ int main ()
         System_Collide(delta);
         
         System_DealDamage();
+        System_EnemyWanderer(delta);
         
         System_DestroyBullets();
         System_DestroyKilled();
@@ -387,8 +427,14 @@ int main ()
         
         DrawFPS(1, 1);
         DrawText(
-            TextFormat("%d", ecs_query(0)->count),
+            TextFormat("%d entt", ecs_query(0)->count),
             1, 24,
+            16, DARKGREEN
+        );
+        
+        DrawText(
+            TextFormat("%d enemies", ecs_query(1, CID_Health)->count),
+            1, 24 * 2,
             16, DARKGREEN
         );
 		
