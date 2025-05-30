@@ -4,6 +4,14 @@ The project is started as a playground to learn C99.
 Also to showcase my skills at learning and gained skills in C/C++.
 C99 was chosen as an old standard, which is still in use. To better understand the core principles of modern C/C++ development I've decided to get a proper foundation. It's often easier to understand modern tools after working with older generation.
 
+# TODO
+
+- [ ] Split the main.c
+- [ ] Extend ECS
+    - [ ] make access for flag components to use entity_store.flag_array (too free some space in bitmask for actual data-containing components)
+    - [ ] make more complex queries, for example with option to exclude components
+    - [ ] make a way to have several query buffers for systems that benefit from cross-comparing entity sets (this may speed up enumerating only valid pairs)
+
 # Known Issues
 
 ## Physics might be slow when too much entities
