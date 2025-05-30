@@ -19,19 +19,19 @@ const ScreenSettings g_screenSettings = { 640, 480 };
 
 void DrawChessboard() 
 {
-    int screenX = 640, screenY = 480;
-    int tileSize = 16;
+    int screenX = g_screenSettings.width, screenY = g_screenSettings.height;
+    Vector2 tileSize = { 16, 12 };
     int offsetTiles = 1;
     Color tileColor = DARKGRAY;
-    for (int i = offsetTiles; (i + offsetTiles) * tileSize < screenX; i++) 
+    for (int i = offsetTiles; (i + offsetTiles) * tileSize.x < screenX; i++) 
     {
-        for (int j = offsetTiles + (i % 2); (j + offsetTiles) * tileSize < screenY; j += 2) 
+        for (int j = 2 + offsetTiles + (i % 2); (j + offsetTiles) * tileSize.y < screenY; j += 2) 
         {
             DrawRectangle(
-                i * tileSize,
-                j * tileSize,
-                tileSize,
-                tileSize,
+                i * tileSize.x,
+                j * tileSize.y,
+                tileSize.x,
+                tileSize.y,
                 tileColor
             );
         }
