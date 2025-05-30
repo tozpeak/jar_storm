@@ -6,43 +6,8 @@
 #include <raymath.h>
 #include <ecs.h>
 
-typedef char Layer;
-typedef Vector2 PositionComponent;
-typedef Vector2 VelocityComponent;
-typedef struct
-{
-    float radius;
-    Layer layer;
-} ColliderComponent;
-typedef struct 
-{
-    Vector2 offset;
-    float radius;
-    //Vector2 size;
-    Color color;
-} DrawRectangleComponent;
-typedef struct
-{
-    short hp;
-    short maxHp;
-} HealthComponent;
-typedef int StateFlagsComponent;
-
-enum ComponentId
-{
-    CID_Position = 0,
-    CID_Velocity,
-    CID_Collider,
-    CID_DrawRectangle,
-    CID_Health,
-    CID_StateFlags,
-    CID_HasCollision,
-    CID_IsBullet,
-    CID_IsKilled,
-    CID_IsWanderer,
-    
-    CID_Count
-};
+#include <components.h>
+#include <physics.h>
 
 typedef struct
 {
@@ -51,38 +16,6 @@ typedef struct
 } ScreenSettings;
 
 const ScreenSettings g_screenSettings = { 640, 480 };
-
-enum LayerName
-{
-    LN_PLAYER = 0,
-    LN_ENEMY = 1,
-    LN_WALL = 2,
-    LN_PL_BULLET = 3,
-    LN_EN_BULLET = 4,
-    
-    LN_COUNT,
-};
-
-Layer g_layerMask[LN_COUNT] = { 0 };
-
-#define MASK( _layerName ) 1 << _layerName
-
-void IntersectLayers(Layer a, Layer b) 
-{
-    g_layerMask[a] |= MASK(b);
-    g_layerMask[b] |= MASK(a);
-}
-
-void InitLayers() 
-{
-    IntersectLayers(LN_PLAYER, LN_ENEMY);
-    IntersectLayers(LN_PLAYER, LN_WALL);
-    IntersectLayers(LN_PLAYER, LN_EN_BULLET);
-    IntersectLayers(LN_ENEMY,  LN_WALL);
-    IntersectLayers(LN_ENEMY, LN_PL_BULLET);
-    IntersectLayers(LN_WALL, LN_PL_BULLET);
-    IntersectLayers(LN_WALL, LN_EN_BULLET);
-}
 
 void DrawChessboard() 
 {
@@ -141,33 +74,6 @@ void System_Move(float deltaTime)
 	}
 }
 
-void System_Collide(float deltaTime)
-{
-    uint32_t i, j;
-	QueryResult *qr = ecs_query(2, CID_Position, CID_Collider);
-	uint32_t* list = qr->list;
-	for (i = 0; i < qr->count; ++i) {
-	    uint32_t ent = list[i];
-		PositionComponent *pos = (PositionComponent*)ecs_get(ent, CID_Position);
-		ColliderComponent *col = (ColliderComponent*)ecs_get(ent, CID_Collider);
-		Layer layerMask = g_layerMask[col->layer];
-		
-		for (j = i+1; j < qr->count; ++j) {
-	        uint32_t entB = list[j];
-		    ColliderComponent *colB = (ColliderComponent*)ecs_get(entB, CID_Collider);
-		    
-		    if( !(MASK(colB->layer) & layerMask) ) continue;
-		    
-		    PositionComponent *posB = (PositionComponent*)ecs_get(entB, CID_Position);
-		    float distSqr = Vector2DistanceSqr(*pos, *posB);
-		    float minDist = col->radius + colB->radius;
-		    if(distSqr > minDist * minDist) continue;
-		    
-		    ecs_add(ent, CID_HasCollision, NULL);
-		    ecs_add(entB, CID_HasCollision, NULL);
-		}
-	}
-}
 
 void System_DealDamage()
 {
@@ -287,15 +193,6 @@ void System_ClearOutOfBounds()
 	}
 }
 
-void System_ClearCollisions() 
-{
-    uint32_t i;
-	QueryResult *qr = ecs_query(1, CID_HasCollision);
-	for (i = 0; i < qr->count; ++i) {
-		ecs_remove(qr->list[i], CID_HasCollision);
-	}
-}
-
 void AddBullet(Vector2 aimFrom, Vector2 aimDirection) 
 {
     Vector2 velocity = Vector2Scale(aimDirection, 16 * 16);
@@ -344,7 +241,8 @@ int main ()
 	// Create the window and OpenGL context
 	InitWindow(g_screenSettings.width, g_screenSettings.height, "Hello Raylib");
 	
-	InitLayers();
+	InitPhysics();
+	InitComponents();
     
     Vector2 playerPos = { 32, 32 };
     Vector2 playerSize = { 12, 24 };
@@ -353,19 +251,6 @@ int main ()
     float playerSpeed = 16 * 4;
     float shotCooldownState = 0;
     float shotCooldown = 0.05f;
-    
-    ecs_init(CID_Count, 
-        sizeof(PositionComponent), 
-        sizeof(VelocityComponent), 
-        sizeof(ColliderComponent), 
-        sizeof(DrawRectangleComponent),
-        sizeof(HealthComponent),
-        sizeof(StateFlagsComponent),
-        0, //CID_HasCollision
-        0, //CID_IsBullet
-        0, //CID_IsDead
-        0 //CID_IsWanderer
-    );
     
     for (int i = 1; i < 10; i++) {
         for (int j = 1; j < 8; j++) {
