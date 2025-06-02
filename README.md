@@ -6,7 +6,34 @@ C99 was chosen as an old standard, which is still in use. To better understand t
 
 # TODO
 
-- [ ] Split the main.c
+- [ ] Collision system to store collision data:
+    - other collision entity
+    - collision point
+    - collision depth
+    - collision normal
+
+- [ ] Bullets have health
+- [ ] DealDamageOnCollision component:
+    - target: self, other, both
+    - damage layer mask
+
+- [ ] Move player to ECS
+- [ ] Move input to ECS
+
+- [ ] Level layout
+- [ ] Progression
+- [ ] Core abilities
+- [ ] Items
+- [ ] Chests
+
+- [ ] Melee attacks
+- [ ] Implement raycast (for alternative bullets)
+- [ ] Enemy behaviour:
+    - [ ] make structure for flow field calculation,
+    - [ ] make components for more interesting enemy behaviour,
+    - [ ] FSM or behaviour trees
+
+- [x] Split the main.c
 - [ ] Extend ECS
     - [ ] make access for flag components to use entity_store.flag_array (too free some space in bitmask for actual data-containing components)
     - [ ] make more complex queries, for example with option to exclude components
