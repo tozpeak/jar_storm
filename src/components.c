@@ -11,7 +11,7 @@ void InitComponents()
         sizeof(VelocityComponent), 
         sizeof(ColliderComponent), 
         sizeof(HasCollisionsComponent), 
-        sizeof(DrawRectangleComponent),
+        sizeof(DrawShapeComponent),
         sizeof(HealthComponent),
         sizeof(DealDamageComponent),
         sizeof(StateFlagsComponent),

@@ -12,10 +12,10 @@ C99 was chosen as an old standard, which is still in use. To better understand t
     - [ ] collision depth
     - [ ] collision normal
 
-- [ ] Bullets have health
-- [ ] DealDamageOnCollision component:
+- [x] Bullets have health
+- [x] DealDamageOnCollision component:
     - target: self, other, both
-    - damage layer mask
+    - ~~damage layer mask~~
 
 - [ ] Move player to ECS
 - [ ] Move input to ECS

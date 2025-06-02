@@ -21,7 +21,7 @@ typedef struct
     float radius;
     //Vector2 size;
     Color color;
-} DrawRectangleComponent;
+} DrawShapeComponent;
 typedef struct
 {
     short hp;
@@ -41,7 +41,7 @@ enum ComponentId
     CID_Velocity,
     CID_Collider, //defined in physics.h
     CID_HasCollisions, //defined in physics.h
-    CID_DrawRectangle,
+    CID_DrawShape,
     CID_Health,
     CID_DealDamage,
     CID_StateFlags,

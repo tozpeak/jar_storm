@@ -153,10 +153,10 @@ void System_DestroyKilled()
 void System_Draw() 
 {
     uint32_t i;
-	QueryResult *qr = ecs_query(2, CID_Position, CID_DrawRectangle);
+	QueryResult *qr = ecs_query(2, CID_Position, CID_DrawShape);
 	for (i = 0; i < qr->count; ++i) {
 		PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
-		DrawRectangleComponent *rect = (DrawRectangleComponent*)ecs_get(qr->list[i], CID_DrawRectangle);
+		DrawShapeComponent *rect = (DrawShapeComponent*)ecs_get(qr->list[i], CID_DrawShape);
 		Color color = rect->color;
 		
 		if(rect->radius < 0.1f) DrawPixelV(*pos, color);
@@ -192,10 +192,10 @@ void System_DrawEnemyHP()
 void System_DrawDebugCollisions()
 {
     uint32_t i;
-	QueryResult *qr = ecs_query(3, CID_Position, CID_DrawRectangle, CID_HasCollisions);
+	QueryResult *qr = ecs_query(3, CID_Position, CID_DrawShape, CID_HasCollisions);
 	for (i = 0; i < qr->count; ++i) {
 		PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
-		DrawRectangleComponent *rect = (DrawRectangleComponent*)ecs_get(qr->list[i], CID_DrawRectangle);
+		DrawShapeComponent *rect = (DrawShapeComponent*)ecs_get(qr->list[i], CID_DrawShape);
 		Color color = RED;
 		
 		if(rect->radius < 0.1f) DrawPixelV(*pos, color);
@@ -224,14 +224,14 @@ void AddBullet(Vector2 aimFrom, Vector2 aimDirection, float speed)
     Entity e = ecs_create();
     PositionComponent pos = aimFrom;
     VelocityComponent vel = velocity;
-    DrawRectangleComponent rect = { Vector2Zero(), 0, WHITE };
+    DrawShapeComponent rect = { Vector2Zero(), 0, WHITE };
     ColliderComponent col = { 0.5f , (Layer)LN_PL_BULLET };
     DealDamageComponent dam = { 4, DMG_SELF | DMG_OTHER };
     HealthComponent hp = { 1, 1 };
     
     ecs_add(e.id, CID_Position, &pos );
     ecs_add(e.id, CID_Velocity, &vel );
-    ecs_add(e.id, CID_DrawRectangle, &rect );
+    ecs_add(e.id, CID_DrawShape, &rect );
     ecs_add(e.id, CID_Collider, &col );
     ecs_add(e.id, CID_DealDamage, &dam );
     ecs_add(e.id, CID_Health, &hp );
@@ -245,14 +245,14 @@ void AddBigBullet(Vector2 aimFrom, Vector2 aimDirection, float speed)
     Entity e = ecs_create();
     PositionComponent pos = aimFrom;
     VelocityComponent vel = velocity;
-    DrawRectangleComponent rect = { Vector2Zero(), radius, SKYBLUE };
+    DrawShapeComponent rect = { Vector2Zero(), radius, SKYBLUE };
     ColliderComponent col = { radius , (Layer)LN_PL_BULLET };
     DealDamageComponent dam = { 4, DMG_SELF | DMG_OTHER };
     HealthComponent hp = { 36, 36 };
     
     ecs_add(e.id, CID_Position, &pos );
     ecs_add(e.id, CID_Velocity, &vel );
-    ecs_add(e.id, CID_DrawRectangle, &rect );
+    ecs_add(e.id, CID_DrawShape, &rect );
     ecs_add(e.id, CID_Collider, &col );
     ecs_add(e.id, CID_DealDamage, &dam );
     ecs_add(e.id, CID_Health, &hp );
@@ -268,13 +268,13 @@ uint32_t AddEnemy(Vector2 position)
 	    (Vector2) { 5, 0 },
 	    (rand() % 628) / 100.0f
 	);
-    DrawRectangleComponent rect = { Vector2Zero(), radius, WHITE };
+    DrawShapeComponent rect = { Vector2Zero(), radius, WHITE };
     ColliderComponent col = { radius , (Layer)LN_ENEMY };
     HealthComponent hp = { 24, 32 };
     
     ecs_add(e.id, CID_Position, &pos );
     ecs_add(e.id, CID_Velocity, &vel );
-    ecs_add(e.id, CID_DrawRectangle, &rect );
+    ecs_add(e.id, CID_DrawShape, &rect );
     ecs_add(e.id, CID_Collider, &col );
     ecs_add(e.id, CID_Health, &hp );
     ecs_add(e.id, CID_IsWanderer, NULL );
