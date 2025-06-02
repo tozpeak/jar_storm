@@ -294,7 +294,17 @@ int main ()
 	//SetTargetFPS(120);
 
 	// Create the window and OpenGL context
-	InitWindow(g_screenSettings.width, g_screenSettings.height, "Hello Raylib");
+	const int screenScale = 2;
+	
+	InitWindow(g_screenSettings.width * screenScale, g_screenSettings.height * screenScale, "Hello Raylib");
+	//SetWindowSize(g_screenSettings.width * screenScale, g_screenSettings.height * screenScale);
+	
+    Camera2D camera = { 0 };
+    camera.target = (Vector2){ 0 };
+    camera.offset = (Vector2){ 0 }; //-g_screenSettings.width/2.0f, -g_screenSettings.height/2.0f };
+    camera.rotation = 0.0f;
+    camera.zoom = screenScale;
+
 	
 	InitPhysics();
 	InitComponents();
@@ -327,7 +337,7 @@ int main ()
         if (IsKeyDown(KEY_W)) playerPos.y -= dSpeed;
         if (IsKeyDown(KEY_S)) playerPos.y += dSpeed;
         
-        Vector2 aimTo = GetMousePosition();
+        Vector2 aimTo = GetScreenToWorld2D(GetMousePosition(), camera);
         Vector2 aimFrom = Vector2Add (playerPos, aimFromOffset);
         
         aimDirection = Vector2Subtract(aimTo, aimFrom);
@@ -361,6 +371,8 @@ int main ()
 		// Setup the back buffer for drawing (clear color and depth buffers)
 		ClearBackground(BLACK);
 		
+		BeginMode2D(camera);
+		
 		DrawChessboard();
 
 		DrawCharacter(playerPos, playerSize);
@@ -370,6 +382,8 @@ int main ()
         System_DrawDebugCollisions();
         
         System_DrawEnemyHP();
+        
+        EndMode2D();
         
         DrawFPS(1, 1);
         DrawText(
