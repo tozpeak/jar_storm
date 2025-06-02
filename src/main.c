@@ -78,11 +78,35 @@ void System_Move(float deltaTime)
 void System_DealDamage()
 {
     uint32_t i;
-	QueryResult *qr = ecs_query(2, CID_Health, CID_HasCollision);
+	QueryResult *qr = ecs_query(2, CID_Health, CID_HasCollisions);
 	for (i = 0; i < qr->count; ++i) {
 		HealthComponent *hp = (HealthComponent*)ecs_get(qr->list[i], CID_Health);
 		hp->hp -= 4;
 		if(hp->hp <= 0) ecs_add(qr->list[i], CID_IsKilled, NULL);
+	}
+}
+
+void System_DealDamageNew()
+{
+    uint32_t i;
+	QueryResult *qr = ecs_query(2, CID_Health, CID_HasCollisions);
+	for (i = 0; i < qr->count; ++i) {
+		HealthComponent *hp = (HealthComponent*)ecs_get(qr->list[i], CID_Health);
+		HasCollisionsComponent *hc = (HasCollisionsComponent*)ecs_get(qr->list[i], CID_HasCollisions);
+		
+        CollisionIterator iterator = { 0 };
+        InitCollisionIterator(&iterator, qr->list[i]);
+        while (TryGetNextCollision(&iterator)) {
+            uint32_t entB = iterator.other;
+            CollisionData* cData = iterator.collisionData;
+            
+            DealDamageComponent *dam = (DealDamageComponent*)ecs_get(entB, CID_DealDamage);
+            
+            hp->hp -= dam->damage;
+            
+		    if(hp->hp <= 0) ecs_add(qr->list[i], CID_IsKilled, NULL);
+        }
+        
 	}
 }
 
@@ -111,7 +135,7 @@ void System_EnemyWanderer(float deltaTime)
 void System_DestroyBullets()
 {
     uint32_t i;
-	QueryResult *qr = ecs_query(2, CID_IsBullet, CID_HasCollision);
+	QueryResult *qr = ecs_query(2, CID_IsBullet, CID_HasCollisions);
 	for (i = 0; i < qr->count; ++i) {
 		ecs_kill(qr->list[i]);
 	}
@@ -168,7 +192,7 @@ void System_DrawEnemyHP()
 void System_DrawDebugCollisions()
 {
     uint32_t i;
-	QueryResult *qr = ecs_query(3, CID_Position, CID_DrawRectangle, CID_HasCollision);
+	QueryResult *qr = ecs_query(3, CID_Position, CID_DrawRectangle, CID_HasCollisions);
 	for (i = 0; i < qr->count; ++i) {
 		PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
 		DrawRectangleComponent *rect = (DrawRectangleComponent*)ecs_get(qr->list[i], CID_DrawRectangle);
@@ -193,9 +217,9 @@ void System_ClearOutOfBounds()
 	}
 }
 
-void AddBullet(Vector2 aimFrom, Vector2 aimDirection) 
+void AddBullet(Vector2 aimFrom, Vector2 aimDirection, float speed) 
 {
-    Vector2 velocity = Vector2Scale(aimDirection, 16 * 16);
+    Vector2 velocity = Vector2Scale(aimDirection, speed);
     //aimFrom = Vector2Add(aimFrom, velocity);
     
     Entity e = ecs_create();
@@ -203,15 +227,17 @@ void AddBullet(Vector2 aimFrom, Vector2 aimDirection)
     VelocityComponent vel = velocity;
     DrawRectangleComponent rect = { Vector2Zero(), 0, WHITE };
     ColliderComponent col = { 0.5f , (Layer)LN_PL_BULLET };
+    DealDamageComponent dam = { 4 };
     
     ecs_add(e.id, CID_Position, &pos );
     ecs_add(e.id, CID_Velocity, &vel );
     ecs_add(e.id, CID_DrawRectangle, &rect );
     ecs_add(e.id, CID_Collider, &col );
+    ecs_add(e.id, CID_DealDamage, &dam );
     ecs_add(e.id, CID_IsBullet, NULL );
 }
 
-void AddEnemy(Vector2 position) 
+uint32_t AddEnemy(Vector2 position) 
 {
     float radius = 6.0f;
     Entity e = ecs_create();
@@ -230,10 +256,16 @@ void AddEnemy(Vector2 position)
     ecs_add(e.id, CID_Collider, &col );
     ecs_add(e.id, CID_Health, &hp );
     ecs_add(e.id, CID_IsWanderer, NULL );
+    
+    return e.id;
 }
+
+void test_main();
 
 int main ()
 {
+    //test_main(); return 0;
+
 	// Tell the window to use vsync and work on high DPI displays
 	//SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
 	//SetTargetFPS(120);
@@ -251,6 +283,7 @@ int main ()
     float playerSpeed = 16 * 4;
     float shotCooldownState = 0;
     float shotCooldown = 0.05f;
+    float bulletSpeed = 16 * 16;
     
     for (int i = 1; i < 10; i++) {
         for (int j = 1; j < 8; j++) {
@@ -279,7 +312,7 @@ int main ()
         shotCooldownState += delta;
         
         if (IsKeyDown(KEY_SPACE) && (shotCooldownState > shotCooldown)) {
-            AddBullet(aimFrom, aimDirection);
+            AddBullet(aimFrom, aimDirection, bulletSpeed);
             shotCooldownState = 0;
         }
         
@@ -287,7 +320,7 @@ int main ()
         System_ClearCollisions();
         System_Collide(delta);
         
-        System_DealDamage();
+        System_DealDamageNew();
         System_EnemyWanderer(delta);
         
         System_DestroyBullets();
@@ -322,6 +355,69 @@ int main ()
             1, 24 * 2,
             16, DARKGREEN
         );
+		
+		// end the frame and get ready for the next one  (display frame, poll input, etc...)
+		EndDrawing();
+	}
+	// destroy the window and cleanup the OpenGL context
+	CloseWindow();
+	return 0;
+}
+
+void test_main() 
+{
+	// Create the window and OpenGL context
+	InitWindow(g_screenSettings.width, g_screenSettings.height, "Hello Raylib");
+	
+	InitPhysics();
+	InitComponents();
+	
+	Vector2 enemyPos = { 128, 128 };
+	
+	uint32_t enemyId = AddEnemy( enemyPos );
+	ecs_remove(enemyId, CID_Velocity);
+	
+	Vector2 bulletOffset = { 64, 0 };
+	
+	for (int i = 0; i < 4; i++) {
+	    AddBullet ( 
+	        Vector2Subtract ( enemyPos, bulletOffset ), 
+	        bulletOffset,
+	        0.5
+        );
+	    bulletOffset = Vector2Rotate(bulletOffset, PI / 2);
+	}
+	
+    while (!WindowShouldClose())		// run the loop untill the user presses ESCAPE or presses the Close button on the window
+	{
+        float delta = GetFrameTime();
+        
+        System_Move(delta);
+        System_ClearCollisions();
+        System_Collide(delta);
+        
+        System_DealDamageNew();
+        //System_EnemyWanderer(delta);
+        
+        System_DestroyBullets();
+        System_DestroyKilled();
+        System_ClearOutOfBounds();
+        
+		// drawing
+		BeginDrawing();
+
+		// Setup the back buffer for drawing (clear color and depth buffers)
+		ClearBackground(BLACK);
+		
+		DrawChessboard();
+
+		//DrawCharacter(playerPos, playerSize);
+		//DrawGun(aimFrom, aimDirection);
+		
+        System_Draw();
+        System_DrawDebugCollisions();
+        
+        System_DrawEnemyHP();
 		
 		// end the frame and get ready for the next one  (display frame, poll input, etc...)
 		EndDrawing();

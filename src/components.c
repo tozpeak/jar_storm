@@ -10,10 +10,11 @@ void InitComponents()
         sizeof(PositionComponent), 
         sizeof(VelocityComponent), 
         sizeof(ColliderComponent), 
+        sizeof(HasCollisionsComponent), 
         sizeof(DrawRectangleComponent),
         sizeof(HealthComponent),
+        sizeof(DealDamageComponent),
         sizeof(StateFlagsComponent),
-        0, //CID_HasCollision
         0, //CID_IsBullet
         0, //CID_IsDead
         0 //CID_IsWanderer

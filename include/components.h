@@ -7,11 +7,7 @@
 
 typedef Vector2 PositionComponent;
 typedef Vector2 VelocityComponent;
-typedef struct
-{
-    float radius;
-    Layer layer;
-} ColliderComponent;
+
 typedef struct 
 {
     Vector2 offset;
@@ -24,17 +20,23 @@ typedef struct
     short hp;
     short maxHp;
 } HealthComponent;
+typedef struct
+{
+    short damage;
+    //Layer damageMask;
+} DealDamageComponent;
 typedef int StateFlagsComponent;
 
 enum ComponentId
 {
     CID_Position = 0,
     CID_Velocity,
-    CID_Collider,
+    CID_Collider, //defined in physics.h
+    CID_HasCollisions, //defined in physics.h
     CID_DrawRectangle,
     CID_Health,
+    CID_DealDamage,
     CID_StateFlags,
-    CID_HasCollision,
     CID_IsBullet,
     CID_IsKilled,
     CID_IsWanderer,

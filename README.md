@@ -6,11 +6,11 @@ C99 was chosen as an old standard, which is still in use. To better understand t
 
 # TODO
 
-- [ ] Collision system to store collision data:
-    - other collision entity
-    - collision point
-    - collision depth
-    - collision normal
+- [-] Collision system to store collision data:
+    - [x] other collision entity
+    - [ ] collision point
+    - [ ] collision depth
+    - [ ] collision normal
 
 - [ ] Bullets have health
 - [ ] DealDamageOnCollision component:
