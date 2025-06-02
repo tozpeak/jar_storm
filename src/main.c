@@ -226,7 +226,7 @@ void AddBullet(Vector2 aimFrom, Vector2 aimDirection, float speed)
     VelocityComponent vel = velocity;
     DrawRectangleComponent rect = { Vector2Zero(), 0, WHITE };
     ColliderComponent col = { 0.5f , (Layer)LN_PL_BULLET };
-    DealDamageComponent dam = { 4, 0, DMG_SELF | DMG_OTHER };
+    DealDamageComponent dam = { 4, DMG_SELF | DMG_OTHER };
     HealthComponent hp = { 1, 1 };
     
     ecs_add(e.id, CID_Position, &pos );
@@ -247,7 +247,7 @@ void AddBigBullet(Vector2 aimFrom, Vector2 aimDirection, float speed)
     VelocityComponent vel = velocity;
     DrawRectangleComponent rect = { Vector2Zero(), radius, SKYBLUE };
     ColliderComponent col = { radius , (Layer)LN_PL_BULLET };
-    DealDamageComponent dam = { 4, 0, DMG_SELF | DMG_OTHER };
+    DealDamageComponent dam = { 4, DMG_SELF | DMG_OTHER };
     HealthComponent hp = { 36, 36 };
     
     ecs_add(e.id, CID_Position, &pos );
