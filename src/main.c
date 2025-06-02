@@ -102,9 +102,18 @@ void System_DealDamageNew()
             
             DealDamageComponent *dam = (DealDamageComponent*)ecs_get(entB, CID_DealDamage);
             
-            hp->hp -= dam->damage;
-            
-		    if(hp->hp <= 0) ecs_add(qr->list[i], CID_IsKilled, NULL);
+            if (dam->target & DMG_OTHER)
+            {
+                hp->hp -= dam->damage;
+		        if(hp->hp <= 0) ecs_add(qr->list[i], CID_IsKilled, NULL);
+		    }
+		    
+		    if (dam->target & DMG_SELF)
+		    {
+		        HealthComponent *hpDam = (HealthComponent*)ecs_get(entB, CID_Health);
+		        hpDam->hp -= dam->damage;
+		        if(hpDam->hp <= 0) ecs_add(entB, CID_IsKilled, NULL);
+		    }
         }
         
 	}
@@ -129,15 +138,6 @@ void System_EnemyWanderer(float deltaTime)
 		);
 		
 		*vel = newVel;
-	}
-}
-
-void System_DestroyBullets()
-{
-    uint32_t i;
-	QueryResult *qr = ecs_query(2, CID_IsBullet, CID_HasCollisions);
-	for (i = 0; i < qr->count; ++i) {
-		ecs_kill(qr->list[i]);
 	}
 }
 
@@ -169,7 +169,7 @@ void System_DrawEnemyHP()
     Vector2 offset = { 0, 3 };
     Vector2 right = { 1, 0 };
     uint32_t i;
-	QueryResult *qr = ecs_query(2, CID_Position, CID_Health);
+	QueryResult *qr = ecs_query(2, CID_Position, CID_Health, CID_HasHpBar);
 	for (i = 0; i < qr->count; ++i) {
 		PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
 		HealthComponent *hp = (HealthComponent*)ecs_get(qr->list[i], CID_Health);
@@ -220,21 +220,43 @@ void System_ClearOutOfBounds()
 void AddBullet(Vector2 aimFrom, Vector2 aimDirection, float speed) 
 {
     Vector2 velocity = Vector2Scale(aimDirection, speed);
-    //aimFrom = Vector2Add(aimFrom, velocity);
     
     Entity e = ecs_create();
     PositionComponent pos = aimFrom;
     VelocityComponent vel = velocity;
     DrawRectangleComponent rect = { Vector2Zero(), 0, WHITE };
     ColliderComponent col = { 0.5f , (Layer)LN_PL_BULLET };
-    DealDamageComponent dam = { 4 };
+    DealDamageComponent dam = { 4, 0, DMG_SELF | DMG_OTHER };
+    HealthComponent hp = { 1, 1 };
     
     ecs_add(e.id, CID_Position, &pos );
     ecs_add(e.id, CID_Velocity, &vel );
     ecs_add(e.id, CID_DrawRectangle, &rect );
     ecs_add(e.id, CID_Collider, &col );
     ecs_add(e.id, CID_DealDamage, &dam );
-    ecs_add(e.id, CID_IsBullet, NULL );
+    ecs_add(e.id, CID_Health, &hp );
+}
+
+void AddBigBullet(Vector2 aimFrom, Vector2 aimDirection, float speed) 
+{
+    float radius = 10.0f;
+    Vector2 velocity = Vector2Scale(aimDirection, speed);
+    
+    Entity e = ecs_create();
+    PositionComponent pos = aimFrom;
+    VelocityComponent vel = velocity;
+    DrawRectangleComponent rect = { Vector2Zero(), radius, SKYBLUE };
+    ColliderComponent col = { radius , (Layer)LN_PL_BULLET };
+    DealDamageComponent dam = { 4, 0, DMG_SELF | DMG_OTHER };
+    HealthComponent hp = { 36, 36 };
+    
+    ecs_add(e.id, CID_Position, &pos );
+    ecs_add(e.id, CID_Velocity, &vel );
+    ecs_add(e.id, CID_DrawRectangle, &rect );
+    ecs_add(e.id, CID_Collider, &col );
+    ecs_add(e.id, CID_DealDamage, &dam );
+    ecs_add(e.id, CID_Health, &hp );
+    ecs_add(e.id, CID_HasHpBar, NULL );
 }
 
 uint32_t AddEnemy(Vector2 position) 
@@ -256,6 +278,7 @@ uint32_t AddEnemy(Vector2 position)
     ecs_add(e.id, CID_Collider, &col );
     ecs_add(e.id, CID_Health, &hp );
     ecs_add(e.id, CID_IsWanderer, NULL );
+    ecs_add(e.id, CID_HasHpBar, NULL );
     
     return e.id;
 }
@@ -284,6 +307,7 @@ int main ()
     float shotCooldownState = 0;
     float shotCooldown = 0.05f;
     float bulletSpeed = 16 * 16;
+    float bigBulletSpeed = 16 * 4;
     
     for (int i = 1; i < 10; i++) {
         for (int j = 1; j < 8; j++) {
@@ -311,8 +335,13 @@ int main ()
         
         shotCooldownState += delta;
         
-        if (IsKeyDown(KEY_SPACE) && (shotCooldownState > shotCooldown)) {
+        if (IsMouseButtonDown(0) && (shotCooldownState > shotCooldown)) {
             AddBullet(aimFrom, aimDirection, bulletSpeed);
+            shotCooldownState = 0;
+        }
+        
+        if (IsMouseButtonPressed(1) && (shotCooldownState > shotCooldown)) {
+            AddBigBullet(aimFrom, aimDirection, bigBulletSpeed);
             shotCooldownState = 0;
         }
         
@@ -323,7 +352,6 @@ int main ()
         System_DealDamageNew();
         System_EnemyWanderer(delta);
         
-        System_DestroyBullets();
         System_DestroyKilled();
         System_ClearOutOfBounds();
         
@@ -399,7 +427,6 @@ void test_main()
         System_DealDamageNew();
         //System_EnemyWanderer(delta);
         
-        System_DestroyBullets();
         System_DestroyKilled();
         System_ClearOutOfBounds();
         
