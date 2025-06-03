@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <raylib.h>
 #include <ecs.h>
 
 #include <components.h>
@@ -276,6 +277,13 @@ bool Collision_Circle2Line(PositionComponent* pos1, PositionComponent* pos2, Sha
 
 bool Collision_Line2Line(PositionComponent* pos1, PositionComponent* pos2, ShapeLine *line1, ShapeLine *line2)
 {
-    //TODO: Implement line 2 line collision
-    return false;
+    Vector2 collisionPoint = { 0 };
+    
+    return CheckCollisionLines(
+        Vector2Add( *pos1, line1->start ),
+        Vector2Add( *pos1, line1->finish ),
+        Vector2Add( *pos2, line2->start ),
+        Vector2Add( *pos2, line2->finish ),
+        &collisionPoint
+    );
 }

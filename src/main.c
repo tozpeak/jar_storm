@@ -443,14 +443,14 @@ int test_main()
     };
     
     ecs_add(e.id, CID_Position, &pos );
-    ecs_add(e.id, CID_Velocity, &vel );
+    //ecs_add(e.id, CID_Velocity, &vel );
     ecs_add(e.id, CID_DrawShape, &draw );
     ecs_add(e.id, CID_Collider, &col );
     
     
 	//static bullet
 	e = ecs_create();
-    shape = Shapes_NewLine(Vector2Zero(), (Vector2){ 64, 0 });
+    shape = Shapes_NewLine(Vector2Zero(), (Vector2){ 64, 64 });
     pos = (Vector2) { 64, 64 + 8 };
     draw = (DrawShapeComponent) { GOLD, shape };
     col = (ColliderComponent) { 
@@ -459,6 +459,22 @@ int test_main()
     };
     
     ecs_add(e.id, CID_Position, &pos );
+    ecs_add(e.id, CID_DrawShape, &draw );
+    ecs_add(e.id, CID_Collider, &col );
+    
+	//moving wall
+	e = ecs_create();
+    shape = Shapes_NewLine(Vector2Zero(), (Vector2){ -16, 128 });
+    pos = (Vector2) { 32, 64 };
+    vel = (Vector2) { 16, 0 };
+    draw = (DrawShapeComponent) { GREEN, shape };
+    col = (ColliderComponent) { 
+        shape, 
+        (Layer)LN_WALL
+    };
+    
+    ecs_add(e.id, CID_Position, &pos );
+    ecs_add(e.id, CID_Velocity, &vel );
     ecs_add(e.id, CID_DrawShape, &draw );
     ecs_add(e.id, CID_Collider, &col );
     
