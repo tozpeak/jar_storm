@@ -3,6 +3,7 @@
 #include <ecs.h>
 
 #include <components.h>
+#include <shapes.h>
 
 void InitComponents() 
 {

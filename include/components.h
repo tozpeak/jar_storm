@@ -15,13 +15,6 @@ enum DamageTargetOptions
 typedef Vector2 PositionComponent;
 typedef Vector2 VelocityComponent;
 
-typedef struct 
-{
-    Vector2 offset;
-    float radius;
-    //Vector2 size;
-    Color color;
-} DrawShapeComponent;
 typedef struct
 {
     short hp;
@@ -41,7 +34,7 @@ enum ComponentId
     CID_Velocity,
     CID_Collider, //defined in physics.h
     CID_HasCollisions, //defined in physics.h
-    CID_DrawShape,
+    CID_DrawShape, //defined in shapes.h
     CID_Health,
     CID_DealDamage,
     CID_StateFlags,

@@ -8,6 +8,7 @@
 
 #include <components.h>
 #include <physics.h>
+#include <shapes.h>
 
 typedef struct
 {
@@ -156,11 +157,9 @@ void System_Draw()
 	QueryResult *qr = ecs_query(2, CID_Position, CID_DrawShape);
 	for (i = 0; i < qr->count; ++i) {
 		PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
-		DrawShapeComponent *rect = (DrawShapeComponent*)ecs_get(qr->list[i], CID_DrawShape);
-		Color color = rect->color;
+		DrawShapeComponent *shape = (DrawShapeComponent*)ecs_get(qr->list[i], CID_DrawShape);
 		
-		if(rect->radius < 0.1f) DrawPixelV(*pos, color);
-		else DrawCircleV(*pos, rect->radius, color);
+		Shapes_Draw(pos, &shape->shape, shape->color);
 	}
 }
 
@@ -195,11 +194,10 @@ void System_DrawDebugCollisions()
 	QueryResult *qr = ecs_query(3, CID_Position, CID_DrawShape, CID_HasCollisions);
 	for (i = 0; i < qr->count; ++i) {
 		PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
-		DrawShapeComponent *rect = (DrawShapeComponent*)ecs_get(qr->list[i], CID_DrawShape);
+		DrawShapeComponent *shape = (DrawShapeComponent*)ecs_get(qr->list[i], CID_DrawShape);
 		Color color = RED;
 		
-		if(rect->radius < 0.1f) DrawPixelV(*pos, color);
-		else DrawCircleV(*pos, rect->radius, color);
+		Shapes_Draw(pos, &shape->shape, color);
 	}
 }
 
@@ -224,14 +222,20 @@ void AddBullet(Vector2 aimFrom, Vector2 aimDirection, float speed)
     Entity e = ecs_create();
     PositionComponent pos = aimFrom;
     VelocityComponent vel = velocity;
-    DrawShapeComponent rect = { Vector2Zero(), 0, WHITE };
+    DrawShapeComponent shape = { 
+        YELLOW, 
+        Shapes_NewLine(
+            Vector2Zero(),
+            Vector2Scale( velocity, 0.02f )
+        )
+    };
     ColliderComponent col = { 0.5f , (Layer)LN_PL_BULLET };
     DealDamageComponent dam = { 4, DMG_SELF | DMG_OTHER };
     HealthComponent hp = { 1, 1 };
     
     ecs_add(e.id, CID_Position, &pos );
     ecs_add(e.id, CID_Velocity, &vel );
-    ecs_add(e.id, CID_DrawShape, &rect );
+    ecs_add(e.id, CID_DrawShape, &shape );
     ecs_add(e.id, CID_Collider, &col );
     ecs_add(e.id, CID_DealDamage, &dam );
     ecs_add(e.id, CID_Health, &hp );
@@ -245,14 +249,14 @@ void AddBigBullet(Vector2 aimFrom, Vector2 aimDirection, float speed)
     Entity e = ecs_create();
     PositionComponent pos = aimFrom;
     VelocityComponent vel = velocity;
-    DrawShapeComponent rect = { Vector2Zero(), radius, SKYBLUE };
+    DrawShapeComponent shape = { SKYBLUE, Shapes_NewCircle(Vector2Zero(), radius) };
     ColliderComponent col = { radius , (Layer)LN_PL_BULLET };
     DealDamageComponent dam = { 4, DMG_SELF | DMG_OTHER };
     HealthComponent hp = { 36, 36 };
     
     ecs_add(e.id, CID_Position, &pos );
     ecs_add(e.id, CID_Velocity, &vel );
-    ecs_add(e.id, CID_DrawShape, &rect );
+    ecs_add(e.id, CID_DrawShape, &shape );
     ecs_add(e.id, CID_Collider, &col );
     ecs_add(e.id, CID_DealDamage, &dam );
     ecs_add(e.id, CID_Health, &hp );
@@ -268,13 +272,13 @@ uint32_t AddEnemy(Vector2 position)
 	    (Vector2) { 5, 0 },
 	    (rand() % 628) / 100.0f
 	);
-    DrawShapeComponent rect = { Vector2Zero(), radius, WHITE };
+    DrawShapeComponent shape = { WHITE, Shapes_NewCircle(Vector2Zero(), radius) };
     ColliderComponent col = { radius , (Layer)LN_ENEMY };
     HealthComponent hp = { 24, 32 };
     
     ecs_add(e.id, CID_Position, &pos );
     ecs_add(e.id, CID_Velocity, &vel );
-    ecs_add(e.id, CID_DrawShape, &rect );
+    ecs_add(e.id, CID_DrawShape, &shape );
     ecs_add(e.id, CID_Collider, &col );
     ecs_add(e.id, CID_Health, &hp );
     ecs_add(e.id, CID_IsWanderer, NULL );
@@ -315,8 +319,8 @@ int main ()
     Vector2 aimDirection = { 0, 0 };
     float playerSpeed = 16 * 4;
     float shotCooldownState = 0;
-    float shotCooldown = 0.05f;
-    float bulletSpeed = 16 * 16;
+    float shotCooldown = 0.25f;
+    float bulletSpeed = 16 * 128;
     float bigBulletSpeed = 16 * 4;
     
     for (int i = 1; i < 10; i++) {

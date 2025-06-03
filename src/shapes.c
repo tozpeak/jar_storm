@@ -1,0 +1,48 @@
+#include <raylib.h>
+#include <raymath.h>
+
+#include <shapes.h>
+
+Shape Shapes_NewPixel(Vector2 offset)
+{
+    return (Shape) {
+        .type = SHP_PIXEL,
+        .pixel = (ShapePixel) { offset }
+    };
+}
+
+Shape Shapes_NewCircle(Vector2 offset, float radius)
+{
+    return (Shape) {
+        .type = SHP_CIRCLE,
+        .circle = (ShapeCircle) { offset, radius }
+    };
+}
+
+Shape Shapes_NewLine(Vector2 start, Vector2 finish)
+{
+    return (Shape) {
+        .type = SHP_LINE,
+        .line = (ShapeLine) { start, finish }
+    };
+}
+
+void Shapes_Draw(PositionComponent *pos, Shape *shape, Color color) 
+{
+    switch (shape->type) 
+    {
+        case SHP_PIXEL:
+            DrawPixelV(*pos, color);
+            break;
+        case SHP_CIRCLE:
+            DrawCircleV(*pos, shape->circle.radius, color);
+            break;
+        case SHP_LINE:
+            DrawLineV(
+                Vector2Add(*pos, shape->line.start), 
+                Vector2Add(*pos, shape->line.finish), 
+                color
+            );
+            break;
+    }
+}
