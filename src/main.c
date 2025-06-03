@@ -222,20 +222,23 @@ void AddBullet(Vector2 aimFrom, Vector2 aimDirection, float speed)
     Entity e = ecs_create();
     PositionComponent pos = aimFrom;
     VelocityComponent vel = velocity;
-    DrawShapeComponent shape = { 
-        YELLOW, 
-        Shapes_NewLine(
-            Vector2Zero(),
-            Vector2Scale( velocity, 0.02f )
-        )
+    Shape shape = Shapes_NewLine(
+        Vector2Zero(),
+        Vector2Scale( velocity, 0.02f )
+    );
+    DrawShapeComponent draw = { 
+        YELLOW, shape
     };
-    ColliderComponent col = { 0.5f , (Layer)LN_PL_BULLET };
+    ColliderComponent col = { 
+        shape, 
+        (Layer)LN_PL_BULLET 
+    };
     DealDamageComponent dam = { 4, DMG_SELF | DMG_OTHER };
     HealthComponent hp = { 1, 1 };
     
     ecs_add(e.id, CID_Position, &pos );
     ecs_add(e.id, CID_Velocity, &vel );
-    ecs_add(e.id, CID_DrawShape, &shape );
+    ecs_add(e.id, CID_DrawShape, &draw );
     ecs_add(e.id, CID_Collider, &col );
     ecs_add(e.id, CID_DealDamage, &dam );
     ecs_add(e.id, CID_Health, &hp );
@@ -250,7 +253,10 @@ void AddBigBullet(Vector2 aimFrom, Vector2 aimDirection, float speed)
     PositionComponent pos = aimFrom;
     VelocityComponent vel = velocity;
     DrawShapeComponent shape = { SKYBLUE, Shapes_NewCircle(Vector2Zero(), radius) };
-    ColliderComponent col = { radius , (Layer)LN_PL_BULLET };
+    ColliderComponent col = { 
+        Shapes_NewCircle(Vector2Zero(), radius), 
+        (Layer)LN_PL_BULLET 
+    };
     DealDamageComponent dam = { 4, DMG_SELF | DMG_OTHER };
     HealthComponent hp = { 36, 36 };
     
@@ -273,7 +279,10 @@ uint32_t AddEnemy(Vector2 position)
 	    (rand() % 628) / 100.0f
 	);
     DrawShapeComponent shape = { WHITE, Shapes_NewCircle(Vector2Zero(), radius) };
-    ColliderComponent col = { radius , (Layer)LN_ENEMY };
+    ColliderComponent col = { 
+        Shapes_NewCircle(Vector2Zero(), radius), 
+        (Layer)LN_ENEMY 
+    };
     HealthComponent hp = { 24, 32 };
     
     ecs_add(e.id, CID_Position, &pos );
@@ -418,21 +427,41 @@ int test_main()
 	InitPhysics();
 	InitComponents();
 	
-	Vector2 enemyPos = { 128, 128 };
+	Entity e;
+	Shape shape;
 	
-	uint32_t enemyId = AddEnemy( enemyPos );
-	ecs_remove(enemyId, CID_Velocity);
-	
-	Vector2 bulletOffset = { 64, 0 };
-	
-	for (int i = 0; i < 4; i++) {
-	    AddBullet ( 
-	        Vector2Subtract ( enemyPos, bulletOffset ), 
-	        bulletOffset,
-	        0.5
-        );
-	    bulletOffset = Vector2Rotate(bulletOffset, PI / 2);
-	}
+	//enemy
+	e = ecs_create();
+	float radius = 12;
+	shape = Shapes_NewCircle(Vector2Zero(), 12);
+    PositionComponent pos = { 0, 64 };
+	VelocityComponent vel = { 16, 0 };
+    DrawShapeComponent draw = { WHITE, shape };
+    ColliderComponent col = { 
+        shape, 
+        (Layer)LN_ENEMY
+    };
+    
+    ecs_add(e.id, CID_Position, &pos );
+    ecs_add(e.id, CID_Velocity, &vel );
+    ecs_add(e.id, CID_DrawShape, &draw );
+    ecs_add(e.id, CID_Collider, &col );
+    
+    
+	//static bullet
+	e = ecs_create();
+    shape = Shapes_NewLine(Vector2Zero(), (Vector2){ 64, 0 });
+    pos = (Vector2) { 64, 64 + 8 };
+    draw = (DrawShapeComponent) { GOLD, shape };
+    col = (ColliderComponent) { 
+        shape, 
+        (Layer)LN_PL_BULLET
+    };
+    
+    ecs_add(e.id, CID_Position, &pos );
+    ecs_add(e.id, CID_DrawShape, &draw );
+    ecs_add(e.id, CID_Collider, &col );
+    
 	
     while (!WindowShouldClose())		// run the loop untill the user presses ESCAPE or presses the Close button on the window
 	{

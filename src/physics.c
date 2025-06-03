@@ -30,6 +30,10 @@ void AddCollisionToEntity(
     uint32_t collisionId
 );
 
+bool Collision_Circle2Circle(PositionComponent* pos1, PositionComponent* pos2, ShapeCircle *circle1, ShapeCircle *circle2);
+bool Collision_Circle2Line(PositionComponent* pos1, PositionComponent* pos2, ShapeCircle *circle1, ShapeLine *line2);
+bool Collision_Line2Line(PositionComponent* pos1, PositionComponent* pos2, ShapeLine *line1, ShapeLine *line2);
+
 // ---
 
 void InitPhysics() 
@@ -55,10 +59,39 @@ void System_Collide(float deltaTime)
 		    
 		    if( !(MASK(colB->layer) & layerMask) ) continue;
 		    
+		    //do not support pixel colliders
+		    if (col->shape.type == SHP_PIXEL || colB->shape.type == SHP_PIXEL) continue;
+		    
 		    PositionComponent *posB = (PositionComponent*)ecs_get(entB, CID_Position);
-		    float distSqr = Vector2DistanceSqr(*pos, *posB);
-		    float minDist = col->radius + colB->radius;
-		    if(distSqr > minDist * minDist) continue;
+		    bool hasCollision = false;
+		    
+		    switch (col->shape.type)
+		    {
+	        case SHP_CIRCLE:	            
+		        switch (colB->shape.type)
+		        {
+	            case SHP_CIRCLE:
+	                hasCollision = Collision_Circle2Circle( pos, posB, &(col->shape.circle), &(colB->shape.circle) );
+	                break;
+	            case SHP_LINE:
+	                hasCollision = Collision_Circle2Line( pos, posB, &(col->shape.circle), &(colB->shape.line) );
+	                break;
+		        }
+	            break;
+	        case SHP_LINE:
+		        switch (colB->shape.type)
+		        {
+	            case SHP_CIRCLE:
+	                hasCollision = Collision_Circle2Line( posB, pos, &(colB->shape.circle), &(col->shape.line) );
+	                break;
+	            case SHP_LINE:
+	                hasCollision = Collision_Line2Line( pos, posB, &(col->shape.line), &(colB->shape.line) );
+	                break;
+		        }
+	            break;
+		    }
+		    
+		    if (!hasCollision) continue;
 		    
 		    uint32_t collisionId = NewCollision();
 		    CollisionData* collision = &( state.data[collisionId] );
@@ -189,3 +222,60 @@ void AddCollisionToEntity(
     hc->lastCollisionIndex = collisionId;
 }
 
+
+bool Collision_Circle2Circle(PositionComponent* pos1, PositionComponent* pos2, ShapeCircle *circle1, ShapeCircle *circle2)
+{
+    float distSqr = Vector2DistanceSqr(*pos1, *pos2);
+    float minDist = circle1->radius + circle2->radius;
+    return (distSqr < minDist * minDist);
+}
+
+bool Collision_Circle2Line(PositionComponent* pos1, PositionComponent* pos2, ShapeCircle *circle1, ShapeLine *line2)
+{
+    /*
+        projecting circle position (point c) to line (points a and b)
+        c1 is projected point
+        vectors are named by points, ex. ab = vector from a to b
+        prefix l_ means vector's length
+    */
+    
+    Vector2 a = Vector2Add ( *pos2, line2->start );
+    Vector2 ab = Vector2Subtract ( line2->finish, line2->start );
+    //Vector2 c = *pos1; // Vector2Add ( *pos1, circle1->offset ); //ignoring offsets for collisions
+    Vector2 ac = Vector2Subtract ( *pos1, a );
+    
+    float l_ab = Vector2Length (ab);
+    float l_ac1 = Vector2DotProduct( ab, ac ) / l_ab;
+    
+    float minDistSqr = circle1->radius * circle1->radius;
+    
+    if (l_ac1 <= 0)
+    {
+        return Vector2LengthSqr ( ac ) < minDistSqr;
+    }
+    if (l_ac1 >= l_ab) 
+    {
+        Vector2 b = Vector2Add ( *pos2, line2->finish );
+        Vector2 bc = Vector2Subtract ( *pos1, b );
+        return Vector2DistanceSqr ( *pos1, b ) < minDistSqr;
+    }
+    
+    
+    Vector2 cc1 = Vector2Subtract (
+        Vector2Scale ( 
+            ab,
+            l_ac1 / l_ab
+        ),
+        ac
+    );
+    
+    //DrawText( TextFormat("%f ; %f", l_ac1, l_ab) , 64, 1, 16, DARKGREEN );
+    
+    return Vector2LengthSqr ( cc1 ) < minDistSqr;
+}
+
+bool Collision_Line2Line(PositionComponent* pos1, PositionComponent* pos2, ShapeLine *line1, ShapeLine *line2)
+{
+    //TODO: Implement line 2 line collision
+    return false;
+}

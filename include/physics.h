@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <shapes.h>
 
 typedef char Layer;
 
@@ -27,7 +28,7 @@ typedef struct {
 
 typedef struct
 {
-    float radius;
+    Shape shape;
     Layer layer;
 } ColliderComponent;
 

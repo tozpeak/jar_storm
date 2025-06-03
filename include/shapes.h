@@ -1,7 +1,6 @@
 #pragma once
 
-#include <raymath.h> 
-#include <components.h>
+#include <raymath.h>
 
 typedef char ShapeType;
 enum ShapeTypeOptions
@@ -49,4 +48,4 @@ Shape Shapes_NewPixel(Vector2 offset);
 Shape Shapes_NewCircle(Vector2 offset, float radius);
 Shape Shapes_NewLine(Vector2 start, Vector2 finish);
 
-void Shapes_Draw(PositionComponent *pos, Shape *shape, Color color);
+void Shapes_Draw(Vector2 *pos, Shape *shape, Color color);

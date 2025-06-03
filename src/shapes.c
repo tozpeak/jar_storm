@@ -27,7 +27,7 @@ Shape Shapes_NewLine(Vector2 start, Vector2 finish)
     };
 }
 
-void Shapes_Draw(PositionComponent *pos, Shape *shape, Color color) 
+void Shapes_Draw(Vector2 *pos, Shape *shape, Color color) 
 {
     switch (shape->type) 
     {
