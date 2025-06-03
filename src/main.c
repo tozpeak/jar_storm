@@ -168,7 +168,7 @@ void System_DrawEnemyHP()
     Vector2 offset = { 0, 3 };
     Vector2 right = { 1, 0 };
     uint32_t i;
-	QueryResult *qr = ecs_query(2, CID_Position, CID_Health, CID_HasHpBar);
+	QueryResult *qr = ecs_query(3, CID_Position, CID_Health, CID_HasHpBar);
 	for (i = 0; i < qr->count; ++i) {
 		PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
 		HealthComponent *hp = (HealthComponent*)ecs_get(qr->list[i], CID_Health);
@@ -266,7 +266,7 @@ void AddBigBullet(Vector2 aimFrom, Vector2 aimDirection, float speed)
     ecs_add(e.id, CID_Collider, &col );
     ecs_add(e.id, CID_DealDamage, &dam );
     ecs_add(e.id, CID_Health, &hp );
-    ecs_add(e.id, CID_HasHpBar, NULL );
+    //ecs_add(e.id, CID_HasHpBar, NULL );
 }
 
 uint32_t AddEnemy(Vector2 position) 
@@ -330,7 +330,7 @@ int main ()
     float shotCooldownState = 0;
     float shotCooldown = 0.25f;
     float bulletSpeed = 16 * 128;
-    float bigBulletSpeed = 16 * 4;
+    float bigBulletSpeed = 16 * 16;
     
     for (int i = 1; i < 10; i++) {
         for (int j = 1; j < 8; j++) {

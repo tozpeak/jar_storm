@@ -27,7 +27,7 @@ C99 was chosen as an old standard, which is still in use. To better understand t
 - [ ] Chests
 
 - [ ] Melee attacks
-- [ ] Implement raycast (for alternative bullets)
+- [x] Implement raycast (for alternative bullets)
 - [ ] Enemy behaviour:
     - [ ] make structure for flow field calculation,
     - [ ] make components for more interesting enemy behaviour,
