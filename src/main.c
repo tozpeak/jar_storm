@@ -283,11 +283,11 @@ uint32_t AddEnemy(Vector2 position)
     return e.id;
 }
 
-void test_main();
+int test_main();
 
 int main ()
 {
-    //test_main(); return 0;
+    //return test_main();
 
 	// Tell the window to use vsync and work on high DPI displays
 	//SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
@@ -406,7 +406,7 @@ int main ()
 	return 0;
 }
 
-void test_main() 
+int test_main() 
 {
 	// Create the window and OpenGL context
 	InitWindow(g_screenSettings.width, g_screenSettings.height, "Hello Raylib");
