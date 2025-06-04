@@ -76,44 +76,35 @@ void System_Move(float deltaTime)
 }
 
 
-void System_DealDamage()
-{
-    uint32_t i;
-	QueryResult *qr = ecs_query(2, CID_Health, CID_HasCollisions);
-	for (i = 0; i < qr->count; ++i) {
-		HealthComponent *hp = (HealthComponent*)ecs_get(qr->list[i], CID_Health);
-		hp->hp -= 4;
-		if(hp->hp <= 0) ecs_add(qr->list[i], CID_IsKilled, NULL);
-	}
-}
-
 void System_DealDamageNew()
 {
     uint32_t i;
-	QueryResult *qr = ecs_query(2, CID_Health, CID_HasCollisions);
+	QueryResult *qr = ecs_query(2, CID_DealDamage, CID_HasCollisions);
 	for (i = 0; i < qr->count; ++i) {
-		HealthComponent *hp = (HealthComponent*)ecs_get(qr->list[i], CID_Health);
-		HasCollisionsComponent *hc = (HasCollisionsComponent*)ecs_get(qr->list[i], CID_HasCollisions);
+	    uint32_t entA = qr->list[i];
+        DealDamageComponent *dam = (DealDamageComponent*)ecs_get(entA, CID_DealDamage);
+		HasCollisionsComponent *hc = (HasCollisionsComponent*)ecs_get(entA, CID_HasCollisions);
 		
         CollisionIterator iterator = { 0 };
-        InitCollisionIterator(&iterator, qr->list[i]);
+        InitCollisionIterator(&iterator, entA);
         while (TryGetNextCollision(&iterator)) {
             uint32_t entB = iterator.other;
             CollisionData* cData = iterator.collisionData;
             
-            DealDamageComponent *dam = (DealDamageComponent*)ecs_get(entB, CID_DealDamage);
-            
-            if (dam->target & DMG_OTHER)
-            {
-                hp->hp -= dam->damage;
-		        if(hp->hp <= 0) ecs_add(qr->list[i], CID_IsKilled, NULL);
-		    }
+            if (dam->target & DMG_OTHER
+                && ecs_has(entB, CID_Health)) {
+		        HealthComponent *hp = (HealthComponent*)ecs_get(entB, CID_Health);
+		        
+		        hp->hp -= dam->damage;
+		        if(hp->hp <= 0) ecs_add(entB, CID_IsKilled, NULL);
+            }
 		    
-		    if (dam->target & DMG_SELF)
+		    if (dam->target & DMG_SELF
+		        && ecs_has(entA, CID_Health))
 		    {
-		        HealthComponent *hpDam = (HealthComponent*)ecs_get(entB, CID_Health);
+		        HealthComponent *hpDam = (HealthComponent*)ecs_get(entA, CID_Health);
 		        hpDam->hp -= dam->damage;
-		        if(hpDam->hp <= 0) ecs_add(entB, CID_IsKilled, NULL);
+		        if(hpDam->hp <= 0) ecs_add(entA, CID_IsKilled, NULL);
 		    }
         }
         
