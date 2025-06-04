@@ -115,6 +115,7 @@ ecs_add(uint32_t entity_id, uint32_t component_id, void *data) {
 	size_t size = state.component_store.data_size_array[component_id];
 	void *ptr = ecs_get(entity_id, component_id);
 	state.entity_store.mask_array[entity_id] |= (1 << component_id);
+	if (size == 0) return;
 	memcpy(ptr, data, size);
 } 
 

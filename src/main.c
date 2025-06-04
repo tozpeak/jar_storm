@@ -133,6 +133,15 @@ void System_EnemyWanderer(float deltaTime)
 	}
 }
 
+void System_SaveKilledPlayer()
+{
+    uint32_t i;
+	QueryResult *qr = ecs_query(2, CID_IsKilled, CID_PlayerId);
+	for (i = 0; i < qr->count; ++i) {
+		ecs_remove(qr->list[i], CID_IsKilled);
+	}
+}
+
 void System_DestroyKilled()
 {
     uint32_t i;
@@ -192,7 +201,7 @@ void System_DrawDebugCollisions()
 	}
 }
 
-void System_ClearOutOfBounds() 
+void System_KillOutOfBounds() 
 {
     uint32_t i;
 	QueryResult *qr = ecs_query(1, CID_Position);
@@ -202,7 +211,7 @@ void System_ClearOutOfBounds()
 	     || pos->x < 0
 	     || pos->y > g_screenSettings.height
 	     || pos->y < 0
-	    ) ecs_kill(qr->list[i]);
+	    ) ecs_add(qr->list[i], CID_IsKilled, NULL);
 	}
 }
 
@@ -287,6 +296,33 @@ uint32_t AddEnemy(Vector2 position)
     return e.id;
 }
 
+Entity AddPlayer(Vector2 position, char id) 
+{
+    float radius = 6.0f;
+    Entity e = ecs_create();
+    PositionComponent pos = position;
+	VelocityComponent vel = Vector2Zero();
+    DrawShapeComponent shape = { 
+        (Color){ 0, 0, 0, 127 }, //SHADOW
+        Shapes_NewCircle(Vector2Zero(), radius) 
+    };
+    ColliderComponent col = { 
+        Shapes_NewCircle(Vector2Zero(), radius), 
+        (Layer)LN_PLAYER
+    };
+    HealthComponent hp = { 120, 120 };
+    
+    ecs_add(e.id, CID_Position, &pos );
+    ecs_add(e.id, CID_Velocity, &vel );
+    ecs_add(e.id, CID_DrawShape, &shape );
+    ecs_add(e.id, CID_Collider, &col );
+    ecs_add(e.id, CID_Health, &hp );
+    ecs_add(e.id, CID_PlayerId, &id );
+    ecs_add(e.id, CID_HasHpBar, NULL );
+    
+    return e;
+}
+
 int test_main();
 
 int main ()
@@ -312,8 +348,12 @@ int main ()
 	
 	InitPhysics();
 	InitComponents();
-    
-    Vector2 playerPos = { 32, 32 };
+	
+	Entity player = AddPlayer(
+	    (Vector2) { 32, 32 },
+	    0
+	);
+	
     Vector2 playerSize = { 12, 24 };
     Vector2 aimFromOffset = { 0, -playerSize.y / 2 };
     Vector2 aimDirection = { 0, 0 };
@@ -333,16 +373,24 @@ int main ()
 	while (!WindowShouldClose())		// run the loop untill the user presses ESCAPE or presses the Close button on the window
 	{
         float delta = GetFrameTime();
-
-        float dSpeed = playerSpeed * delta;
         
-        if (IsKeyDown(KEY_D)) playerPos.x += dSpeed;
-        if (IsKeyDown(KEY_A)) playerPos.x -= dSpeed;
-        if (IsKeyDown(KEY_W)) playerPos.y -= dSpeed;
-        if (IsKeyDown(KEY_S)) playerPos.y += dSpeed;
+        Vector2 walkInput = Vector2Zero();
+        
+        if (IsKeyDown(KEY_D)) walkInput.x += 1;
+        if (IsKeyDown(KEY_A)) walkInput.x -= 1;
+        if (IsKeyDown(KEY_W)) walkInput.y -= 1;
+        if (IsKeyDown(KEY_S)) walkInput.y += 1;
+        
+        walkInput = Vector2Scale(
+            Vector2Normalize(walkInput),
+            playerSpeed
+        );
+        
+        ecs_add(player.id, CID_Velocity, &walkInput);
+        PositionComponent* playerPos = (PositionComponent*)ecs_get(player.id, CID_Position);
         
         Vector2 aimTo = GetScreenToWorld2D(GetMousePosition(), camera);
-        Vector2 aimFrom = Vector2Add (playerPos, aimFromOffset);
+        Vector2 aimFrom = Vector2Add (*playerPos, aimFromOffset);
         
         aimDirection = Vector2Subtract(aimTo, aimFrom);
         aimDirection = Vector2Normalize(aimDirection);
@@ -366,8 +414,9 @@ int main ()
         System_DealDamageNew();
         System_EnemyWanderer(delta);
         
+        System_KillOutOfBounds();
+        System_SaveKilledPlayer();
         System_DestroyKilled();
-        System_ClearOutOfBounds();
         
 		// drawing
 		BeginDrawing();
@@ -378,11 +427,12 @@ int main ()
 		BeginMode2D(camera);
 		
 		DrawChessboard();
-
-		DrawCharacter(playerPos, playerSize);
-		DrawGun(aimFrom, aimDirection);
 		
         System_Draw();
+        
+		DrawCharacter(*playerPos, playerSize);
+		DrawGun(aimFrom, aimDirection);
+		
         System_DrawDebugCollisions();
         
         System_DrawEnemyHP();
@@ -481,8 +531,9 @@ int test_main()
         System_DealDamageNew();
         //System_EnemyWanderer(delta);
         
+        System_KillOutOfBounds();
+        System_SaveKilledPlayer();
         System_DestroyKilled();
-        System_ClearOutOfBounds();
         
 		// drawing
 		BeginDrawing();

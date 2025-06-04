@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdio.h>
 #include <raylib.h>
 #include <raymath.h>
 
@@ -26,6 +27,24 @@ typedef struct
     //Layer damageMask;
     DamageTarget target;
 } DealDamageComponent;
+
+typedef struct
+{
+    float cooldown;
+    char attackId;
+} AttackOption;
+
+typedef AttackOption PrimaryAttackComponent;
+typedef AttackOption SecondaryAttackComponent;
+
+typedef struct
+{
+    Vector2 aimAt;
+    bool isPrimary;
+} AttackIntentionComponent;
+
+typedef char PlayerIdComponent;
+
 typedef int StateFlagsComponent;
 
 enum ComponentId
@@ -37,6 +56,12 @@ enum ComponentId
     CID_DrawShape, //defined in shapes.h
     CID_Health,
     CID_DealDamage,
+    
+    CID_PrimaryAttack,
+    CID_SecondaryAttack,
+    CID_AttackIntention,
+    CID_PlayerId,
+    
     CID_StateFlags,
     CID_HasHpBar,
     CID_IsKilled,

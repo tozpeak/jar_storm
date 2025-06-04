@@ -15,9 +15,13 @@ void InitComponents()
         sizeof(DrawShapeComponent),
         sizeof(HealthComponent),
         sizeof(DealDamageComponent),
+        sizeof(PrimaryAttackComponent),
+        sizeof(SecondaryAttackComponent),
+        sizeof(AttackIntentionComponent),
+        sizeof(PlayerIdComponent),
         sizeof(StateFlagsComponent),
-        0, //CID_IsBullet
-        0, //CID_IsDead
+        0, //CID_HasHpBar
+        0, //CID_IsKilled
         0 //CID_IsWanderer
     );
 }
