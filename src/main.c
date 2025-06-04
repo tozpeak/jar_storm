@@ -9,6 +9,7 @@
 #include <components.h>
 #include <physics.h>
 #include <shapes.h>
+#include <spawners.h>
 
 typedef struct
 {
@@ -215,114 +216,6 @@ void System_KillOutOfBounds()
 	}
 }
 
-void AddBullet(Vector2 aimFrom, Vector2 aimDirection, float speed) 
-{
-    Vector2 velocity = Vector2Scale(aimDirection, speed);
-    
-    Entity e = ecs_create();
-    PositionComponent pos = aimFrom;
-    VelocityComponent vel = velocity;
-    Shape shape = Shapes_NewLine(
-        Vector2Zero(),
-        Vector2Scale( velocity, 0.02f )
-    );
-    DrawShapeComponent draw = { 
-        YELLOW, shape
-    };
-    ColliderComponent col = { 
-        shape, 
-        (Layer)LN_PL_BULLET 
-    };
-    DealDamageComponent dam = { 4, DMG_SELF | DMG_OTHER };
-    HealthComponent hp = { 1, 1 };
-    
-    ecs_add(e.id, CID_Position, &pos );
-    ecs_add(e.id, CID_Velocity, &vel );
-    ecs_add(e.id, CID_DrawShape, &draw );
-    ecs_add(e.id, CID_Collider, &col );
-    ecs_add(e.id, CID_DealDamage, &dam );
-    ecs_add(e.id, CID_Health, &hp );
-}
-
-void AddBigBullet(Vector2 aimFrom, Vector2 aimDirection, float speed) 
-{
-    float radius = 10.0f;
-    Vector2 velocity = Vector2Scale(aimDirection, speed);
-    
-    Entity e = ecs_create();
-    PositionComponent pos = aimFrom;
-    VelocityComponent vel = velocity;
-    DrawShapeComponent shape = { SKYBLUE, Shapes_NewCircle(Vector2Zero(), radius) };
-    ColliderComponent col = { 
-        Shapes_NewCircle(Vector2Zero(), radius), 
-        (Layer)LN_PL_BULLET 
-    };
-    DealDamageComponent dam = { 4, DMG_SELF | DMG_OTHER };
-    HealthComponent hp = { 36, 36 };
-    
-    ecs_add(e.id, CID_Position, &pos );
-    ecs_add(e.id, CID_Velocity, &vel );
-    ecs_add(e.id, CID_DrawShape, &shape );
-    ecs_add(e.id, CID_Collider, &col );
-    ecs_add(e.id, CID_DealDamage, &dam );
-    ecs_add(e.id, CID_Health, &hp );
-    //ecs_add(e.id, CID_HasHpBar, NULL );
-}
-
-uint32_t AddEnemy(Vector2 position) 
-{
-    float radius = 6.0f;
-    Entity e = ecs_create();
-    PositionComponent pos = position;
-	VelocityComponent vel = Vector2Rotate(
-	    (Vector2) { 5, 0 },
-	    (rand() % 628) / 100.0f
-	);
-    DrawShapeComponent shape = { WHITE, Shapes_NewCircle(Vector2Zero(), radius) };
-    ColliderComponent col = { 
-        Shapes_NewCircle(Vector2Zero(), radius), 
-        (Layer)LN_ENEMY 
-    };
-    HealthComponent hp = { 24, 32 };
-    
-    ecs_add(e.id, CID_Position, &pos );
-    ecs_add(e.id, CID_Velocity, &vel );
-    ecs_add(e.id, CID_DrawShape, &shape );
-    ecs_add(e.id, CID_Collider, &col );
-    ecs_add(e.id, CID_Health, &hp );
-    ecs_add(e.id, CID_IsWanderer, NULL );
-    ecs_add(e.id, CID_HasHpBar, NULL );
-    
-    return e.id;
-}
-
-Entity AddPlayer(Vector2 position, char id) 
-{
-    float radius = 6.0f;
-    Entity e = ecs_create();
-    PositionComponent pos = position;
-	VelocityComponent vel = Vector2Zero();
-    DrawShapeComponent shape = { 
-        (Color){ 0, 0, 0, 127 }, //SHADOW
-        Shapes_NewCircle(Vector2Zero(), radius) 
-    };
-    ColliderComponent col = { 
-        Shapes_NewCircle(Vector2Zero(), radius), 
-        (Layer)LN_PLAYER
-    };
-    HealthComponent hp = { 120, 120 };
-    
-    ecs_add(e.id, CID_Position, &pos );
-    ecs_add(e.id, CID_Velocity, &vel );
-    ecs_add(e.id, CID_DrawShape, &shape );
-    ecs_add(e.id, CID_Collider, &col );
-    ecs_add(e.id, CID_Health, &hp );
-    ecs_add(e.id, CID_PlayerId, &id );
-    ecs_add(e.id, CID_HasHpBar, NULL );
-    
-    return e;
-}
-
 int test_main();
 
 int main ()
@@ -349,7 +242,7 @@ int main ()
 	InitPhysics();
 	InitComponents();
 	
-	Entity player = AddPlayer(
+	Entity player = Spawn_Player(
 	    (Vector2) { 32, 32 },
 	    0
 	);
@@ -365,7 +258,7 @@ int main ()
     
     for (int i = 1; i < 10; i++) {
         for (int j = 1; j < 8; j++) {
-            AddEnemy((Vector2) { i * 16 * 4, j * 16 * 4 } );
+            Spawn_Enemy((Vector2) { i * 16 * 4, j * 16 * 4 } );
         }
     }
 
@@ -398,12 +291,12 @@ int main ()
         shotCooldownState += delta;
         
         if (IsMouseButtonDown(0) && (shotCooldownState > shotCooldown)) {
-            AddBullet(aimFrom, aimDirection, bulletSpeed);
+            Spawn_Bullet(aimFrom, aimDirection, bulletSpeed);
             shotCooldownState = 0;
         }
         
         if (IsMouseButtonPressed(1) && (shotCooldownState > shotCooldown)) {
-            AddBigBullet(aimFrom, aimDirection, bigBulletSpeed);
+            Spawn_BigBullet(aimFrom, aimDirection, bigBulletSpeed);
             shotCooldownState = 0;
         }
         
