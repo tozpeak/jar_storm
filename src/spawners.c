@@ -2,6 +2,8 @@
 #include <components.h>
 #include <physics.h>
 #include <shapes.h>
+#include <attacks.h>
+
 #include <spawners.h>
 
 void Spawn_Melee(Vector2 aimDirection)
@@ -100,18 +102,16 @@ uint32_t Spawn_Enemy(Vector2 position)
     };
     HealthComponent hp = { 24, 32 };
     
-    SecondaryAttackComponent secAtt = {
-        0.0f,
-        (char)0
-    };
+    PrimaryAttackComponent primAtt = { .attackId = ATK_ID_MELEE_BITE };
     
     ecs_add(e.id, CID_Position, &pos );
     ecs_add(e.id, CID_Velocity, &vel );
     ecs_add(e.id, CID_DrawShape, &shape );
     ecs_add(e.id, CID_Collider, &col );
     ecs_add(e.id, CID_Health, &hp );
-    ecs_add(e.id, CID_SecondaryAttack, &secAtt );
+    ecs_add(e.id, CID_PrimaryAttack, &primAtt );
     ecs_add(e.id, CID_IsWanderer, NULL );
+    ecs_add(e.id, CID_AiAttack, NULL );
     ecs_add(e.id, CID_HasHpBar, NULL );
     
     return e.id;

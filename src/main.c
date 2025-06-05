@@ -134,43 +134,90 @@ void System_EnemyWanderer(float deltaTime)
 	}
 }
 
-void System_UpdateSecondaryAttackCooldown(float deltaTime)
+void UpdateAbilityCooldown(AttackAbility *ability, float delta)
 {
-    uint32_t i;
-    QueryResult *qr = ecs_query(1, CID_SecondaryAttack);
-    for (i = 0; i < qr->count; ++i) {
-	    SecondaryAttackComponent *secAtt = (SecondaryAttackComponent*) ecs_get(qr->list[i], CID_SecondaryAttack);
-	    
-	    if (secAtt->cooldown > 0) secAtt->cooldown -= deltaTime;
+    if (ability->state == ATK_ST_READY) return;
+    
+    ability->cooldown -= delta;
+    if (ability->cooldown < 0)
+    {
+        ability->cooldown = 0;
+        ability->state = ATK_ST_READY;
     }
 }
 
-void System_EnemyMeleeAttack()
+void System_UpdateAttackCooldown(float deltaTime)
 {
     uint32_t i;
-    QueryResult *qr = ecs_query(3, CID_Position, CID_HasCollisions, CID_SecondaryAttack);
-	for (i = 0; i < qr->count; ++i) {
-	    uint32_t entEnemy = qr->list[i];
-	    
-	    SecondaryAttackComponent *secAtt = (SecondaryAttackComponent*) ecs_get(entEnemy, CID_SecondaryAttack);
-	    
-	    if (secAtt->cooldown > 0) continue; //no attacks on cooldown
-	    
-        CollisionIterator iterator = { 0 };
-        InitCollisionIterator(&iterator, entEnemy);
-        while (TryGetNextCollision(&iterator)) {
-            uint32_t entB = iterator.other;
-            CollisionData* cData = iterator.collisionData;
-            
-            if (!ecs_has(entB, CID_PlayerId)) continue;
-            if (!ecs_has(entB, CID_Position)) continue;
-            
-            PositionComponent *playerPos = (PositionComponent*)ecs_get(entB, CID_Position);
-            Spawn_Melee(*playerPos);
-            secAtt->cooldown += 3.0f;
-            break;
+    QueryResult *qr = ecs_query(1, CID_PrimaryAttack);
+    for (i = 0; i < qr->count; ++i) {
+        PrimaryAttackComponent *primAtt = (PrimaryAttackComponent*) ecs_get(qr->list[i], CID_PrimaryAttack);
+        UpdateAbilityCooldown(primAtt, deltaTime);
+        
+        if (ecs_has(qr->list[i], CID_SecondaryAttack))
+        {
+	        SecondaryAttackComponent *secAtt = (SecondaryAttackComponent*) ecs_get(qr->list[i], CID_SecondaryAttack);
+	        UpdateAbilityCooldown(secAtt, deltaTime);
         }
-	}
+    }
+}
+
+void System_EvaluateAiAttack()
+{
+    AttackContext primaryContext = { 0 };
+    AttackContext secondaryContext = { 0 };
+    uint32_t i;
+    QueryResult *qr = ecs_query(2, CID_PrimaryAttack, CID_AiAttack);
+    for (i = 0; i < qr->count; ++i) {
+        AttackIntentionComponent primaryIntention = {
+            .isPrimary = true
+        };
+        primaryContext.entityId = qr->list[i];
+        primaryContext.ability = (PrimaryAttackComponent*) ecs_get(qr->list[i], CID_PrimaryAttack);
+        primaryContext.intention = &primaryIntention;
+        Attack_EvaluateAi( &primaryContext );
+        
+        secondaryContext.aiEvaluation = 0;
+        if (ecs_has(qr->list[i], CID_SecondaryAttack)) {
+            AttackIntentionComponent secondaryIntention = {
+                .isPrimary = false
+            };
+            secondaryContext.entityId = qr->list[i];
+	        secondaryContext.ability = (SecondaryAttackComponent*) ecs_get(qr->list[i], CID_SecondaryAttack);
+	        secondaryContext.intention = &secondaryIntention;
+            Attack_EvaluateAi( &secondaryContext );
+        }
+        
+        AttackContext *bestContext = 
+            ( primaryContext.aiEvaluation > secondaryContext.aiEvaluation )
+            ? &primaryContext
+            : &secondaryContext;
+        
+        if  ( bestContext->aiEvaluation > 0 ) {
+            ecs_add(qr->list[i], CID_AttackIntention, bestContext->intention);
+        }
+    }
+}
+
+void System_PerformAttack()
+{
+    AttackContext context = { 0 };
+    uint32_t i;
+    QueryResult *qr = ecs_query(1, CID_AttackIntention);
+    for (i = 0; i < qr->count; ++i) {
+        
+        context.entityId = qr->list[i];
+        context.intention = (AttackIntentionComponent*) ecs_get(qr->list[i], CID_AttackIntention);
+        uint32_t attackComponentId = context.intention->isPrimary ? CID_PrimaryAttack : CID_SecondaryAttack;
+        if (! ecs_has(context.entityId, attackComponentId)) continue;
+        
+        context.ability = (AttackAbility*) ecs_get(qr->list[i], attackComponentId);
+        
+        if (context.ability->cooldown > 0) continue;
+        
+        Attack_Perform( &context );
+        ecs_remove(qr->list[i], CID_AttackIntention);
+    }
 }
 
 void System_SaveKilledPlayer()
@@ -280,6 +327,7 @@ int main ()
 	
 	InitPhysics();
 	InitComponents();
+	Attack_InitConfig();
 	
 	Entity player = Spawn_Player(
 	    (Vector2) { 32, 32 },
@@ -343,8 +391,9 @@ int main ()
         System_ClearCollisions();
         System_Collide(delta);
         
-        System_UpdateSecondaryAttackCooldown(delta);
-        System_EnemyMeleeAttack();
+        System_UpdateAttackCooldown(delta);
+        System_EvaluateAiAttack();
+        System_PerformAttack();
         System_DealDamageNew();
         System_EnemyWanderer(delta);
         
@@ -401,6 +450,7 @@ int test_main()
 	
 	InitPhysics();
 	InitComponents();
+	Attack_InitConfig();
 	
 	Entity e;
 	Shape shape;
@@ -463,8 +513,9 @@ int test_main()
         System_Collide(delta);
         
                 
-        System_UpdateSecondaryAttackCooldown(delta);
-        System_EnemyMeleeAttack();
+        System_UpdateAttackCooldown(delta);
+        System_EvaluateAiAttack();
+        System_PerformAttack();
         System_DealDamageNew();
         //System_EnemyWanderer(delta);
         

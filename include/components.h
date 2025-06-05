@@ -5,6 +5,7 @@
 #include <raymath.h>
 
 #include <physics.h>
+#include <attacks.h>
 
 typedef char DamageTarget;
 enum DamageTargetOptions
@@ -28,20 +29,8 @@ typedef struct
     DamageTarget target;
 } DealDamageComponent;
 
-typedef struct
-{
-    float cooldown;
-    char attackId;
-} AttackOption;
-
-typedef AttackOption PrimaryAttackComponent;
-typedef AttackOption SecondaryAttackComponent;
-
-typedef struct
-{
-    Vector2 aimAt;
-    bool isPrimary;
-} AttackIntentionComponent;
+typedef AttackAbility PrimaryAttackComponent;
+typedef AttackAbility SecondaryAttackComponent;
 
 typedef char PlayerIdComponent;
 
@@ -54,18 +43,21 @@ enum ComponentId
     CID_Collider, //defined in physics.h
     CID_HasCollisions, //defined in physics.h
     CID_DrawShape, //defined in shapes.h
+    
     CID_Health,
     CID_DealDamage,
     
     CID_PrimaryAttack,
     CID_SecondaryAttack,
-    CID_AttackIntention,
+    CID_AttackIntention, //defined in attacks.h
     CID_PlayerId,
     
     CID_StateFlags,
+    
     CID_HasHpBar,
     CID_IsKilled,
     CID_IsWanderer,
+    CID_AiAttack,
     
     CID_Count
 };

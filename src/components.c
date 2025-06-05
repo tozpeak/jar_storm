@@ -13,15 +13,20 @@ void InitComponents()
         sizeof(ColliderComponent), 
         sizeof(HasCollisionsComponent), 
         sizeof(DrawShapeComponent),
+        
         sizeof(HealthComponent),
         sizeof(DealDamageComponent),
+        
         sizeof(PrimaryAttackComponent),
         sizeof(SecondaryAttackComponent),
         sizeof(AttackIntentionComponent),
         sizeof(PlayerIdComponent),
+        
         sizeof(StateFlagsComponent),
+        
         0, //CID_HasHpBar
         0, //CID_IsKilled
-        0 //CID_IsWanderer
+        0, //CID_IsWanderer
+        0 //CID_AiAttack
     );
 }
