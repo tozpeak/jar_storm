@@ -4,6 +4,32 @@
 #include <shapes.h>
 #include <spawners.h>
 
+void Spawn_Melee(Vector2 aimDirection)
+{
+    float radius = 6.0f;
+    Entity e = ecs_create();
+    PositionComponent pos = aimDirection;
+    Shape shape = Shapes_NewCircle(
+        Vector2Zero(),
+        radius
+    );
+    DrawShapeComponent draw = { 
+        ORANGE, shape
+    };
+    ColliderComponent col = { 
+        shape, 
+        (Layer)LN_EN_BULLET 
+    };
+    DealDamageComponent dam = { 24, DMG_SELF | DMG_OTHER };
+    HealthComponent hp = { 1, 1 };
+    
+    ecs_add(e.id, CID_Position, &pos );
+    ecs_add(e.id, CID_DrawShape, &draw );
+    ecs_add(e.id, CID_Collider, &col );
+    ecs_add(e.id, CID_DealDamage, &dam );
+    ecs_add(e.id, CID_Health, &hp );
+}
+
 void Spawn_Bullet(Vector2 aimFrom, Vector2 aimDirection, float speed) 
 {
     Vector2 velocity = Vector2Scale(aimDirection, speed);
@@ -74,11 +100,17 @@ uint32_t Spawn_Enemy(Vector2 position)
     };
     HealthComponent hp = { 24, 32 };
     
+    SecondaryAttackComponent secAtt = {
+        0.0f,
+        (char)0
+    };
+    
     ecs_add(e.id, CID_Position, &pos );
     ecs_add(e.id, CID_Velocity, &vel );
     ecs_add(e.id, CID_DrawShape, &shape );
     ecs_add(e.id, CID_Collider, &col );
     ecs_add(e.id, CID_Health, &hp );
+    ecs_add(e.id, CID_SecondaryAttack, &secAtt );
     ecs_add(e.id, CID_IsWanderer, NULL );
     ecs_add(e.id, CID_HasHpBar, NULL );
     

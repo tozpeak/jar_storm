@@ -134,6 +134,45 @@ void System_EnemyWanderer(float deltaTime)
 	}
 }
 
+void System_UpdateSecondaryAttackCooldown(float deltaTime)
+{
+    uint32_t i;
+    QueryResult *qr = ecs_query(1, CID_SecondaryAttack);
+    for (i = 0; i < qr->count; ++i) {
+	    SecondaryAttackComponent *secAtt = (SecondaryAttackComponent*) ecs_get(qr->list[i], CID_SecondaryAttack);
+	    
+	    if (secAtt->cooldown > 0) secAtt->cooldown -= deltaTime;
+    }
+}
+
+void System_EnemyMeleeAttack()
+{
+    uint32_t i;
+    QueryResult *qr = ecs_query(3, CID_Position, CID_HasCollisions, CID_SecondaryAttack);
+	for (i = 0; i < qr->count; ++i) {
+	    uint32_t entEnemy = qr->list[i];
+	    
+	    SecondaryAttackComponent *secAtt = (SecondaryAttackComponent*) ecs_get(entEnemy, CID_SecondaryAttack);
+	    
+	    if (secAtt->cooldown > 0) continue; //no attacks on cooldown
+	    
+        CollisionIterator iterator = { 0 };
+        InitCollisionIterator(&iterator, entEnemy);
+        while (TryGetNextCollision(&iterator)) {
+            uint32_t entB = iterator.other;
+            CollisionData* cData = iterator.collisionData;
+            
+            if (!ecs_has(entB, CID_PlayerId)) continue;
+            if (!ecs_has(entB, CID_Position)) continue;
+            
+            PositionComponent *playerPos = (PositionComponent*)ecs_get(entB, CID_Position);
+            Spawn_Melee(*playerPos);
+            secAtt->cooldown += 3.0f;
+            break;
+        }
+	}
+}
+
 void System_SaveKilledPlayer()
 {
     uint32_t i;
@@ -304,6 +343,8 @@ int main ()
         System_ClearCollisions();
         System_Collide(delta);
         
+        System_UpdateSecondaryAttackCooldown(delta);
+        System_EnemyMeleeAttack();
         System_DealDamageNew();
         System_EnemyWanderer(delta);
         
@@ -421,6 +462,9 @@ int test_main()
         System_ClearCollisions();
         System_Collide(delta);
         
+                
+        System_UpdateSecondaryAttackCooldown(delta);
+        System_EnemyMeleeAttack();
         System_DealDamageNew();
         //System_EnemyWanderer(delta);
         
