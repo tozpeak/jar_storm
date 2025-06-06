@@ -32,6 +32,32 @@ void Spawn_Melee(Vector2 aimDirection)
     ecs_add(e.id, CID_Health, &hp );
 }
 
+
+void Spawn_Fireball(Vector2 aimFrom, Vector2 aimDirection, float speed) 
+{
+    float radius = 6.0f;
+    Vector2 velocity = Vector2Scale(aimDirection, speed);
+    
+    Entity e = ecs_create();
+    PositionComponent pos = aimFrom;
+    VelocityComponent vel = velocity;
+    DrawShapeComponent shape = { ORANGE, Shapes_NewCircle(Vector2Zero(), radius) };
+    ColliderComponent col = { 
+        Shapes_NewCircle(Vector2Zero(), radius), 
+        (Layer)LN_EN_BULLET 
+    };
+    DealDamageComponent dam = { 36, DMG_SELF | DMG_OTHER };
+    HealthComponent hp = { 1, 1 };
+    
+    ecs_add(e.id, CID_Position, &pos );
+    ecs_add(e.id, CID_Velocity, &vel );
+    ecs_add(e.id, CID_DrawShape, &shape );
+    ecs_add(e.id, CID_Collider, &col );
+    ecs_add(e.id, CID_DealDamage, &dam );
+    ecs_add(e.id, CID_Health, &hp );
+    //ecs_add(e.id, CID_HasHpBar, NULL );
+}
+
 void Spawn_Bullet(Vector2 aimFrom, Vector2 aimDirection, float speed) 
 {
     Vector2 velocity = Vector2Scale(aimDirection, speed);
@@ -110,6 +136,39 @@ uint32_t Spawn_Enemy(Vector2 position)
     ecs_add(e.id, CID_Collider, &col );
     ecs_add(e.id, CID_Health, &hp );
     ecs_add(e.id, CID_PrimaryAttack, &primAtt );
+    ecs_add(e.id, CID_IsWanderer, NULL );
+    ecs_add(e.id, CID_AiAttack, NULL );
+    ecs_add(e.id, CID_HasHpBar, NULL );
+    
+    return e.id;
+}
+
+uint32_t Spawn_Enemy_Lizard(Vector2 position) 
+{
+    float radius = 8.0f;
+    Entity e = ecs_create();
+    PositionComponent pos = position;
+	VelocityComponent vel = Vector2Rotate(
+	    (Vector2) { 5, 0 },
+	    (rand() % 628) / 100.0f
+	);
+    DrawShapeComponent shape = { VIOLET, Shapes_NewCircle(Vector2Zero(), radius) };
+    ColliderComponent col = { 
+        Shapes_NewCircle(Vector2Zero(), radius), 
+        (Layer)LN_ENEMY 
+    };
+    HealthComponent hp = { 48, 48 };
+    
+    PrimaryAttackComponent primAtt = { .attackId = ATK_ID_MELEE_CLAW };
+    SecondaryAttackComponent secAtt = { .attackId = ATK_ID_SHOT_FIREBALL };
+    
+    ecs_add(e.id, CID_Position, &pos );
+    ecs_add(e.id, CID_Velocity, &vel );
+    ecs_add(e.id, CID_DrawShape, &shape );
+    ecs_add(e.id, CID_Collider, &col );
+    ecs_add(e.id, CID_Health, &hp );
+    ecs_add(e.id, CID_PrimaryAttack, &primAtt );
+    ecs_add(e.id, CID_SecondaryAttack, &secAtt );
     ecs_add(e.id, CID_IsWanderer, NULL );
     ecs_add(e.id, CID_AiAttack, NULL );
     ecs_add(e.id, CID_HasHpBar, NULL );

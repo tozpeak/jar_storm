@@ -27,6 +27,37 @@ void Perform_EnergyBlast(AttackContext *context)
     Spawn_BigBullet(aimFrom, context->intention->aimAt, bulletSpeed);
 }
 
+void Perform_ShotFireball(AttackContext *context)
+{
+    float bulletSpeed = 16 * 12;
+    PositionComponent* shooterPos = (PositionComponent*)ecs_get(context->entityId, CID_Position);
+    Spawn_Fireball(*shooterPos, context->intention->aimAt, bulletSpeed);
+}
+
+float AiPriority_ShotFireball(AttackContext *context)
+{
+    float activationDistance = 16 * 8;
+    
+    if (context->ability->cooldown > 0) return 0;
+    
+    uint32_t enemyEntId = context->entityId;
+    
+    uint32_t playerEntId;
+    QueryResult qr = { .list = &playerEntId, .cap = 1 };
+    ecs_query_ex(&qr, 1, CID_PlayerId);
+    if (qr.count == 0) return 0;
+    
+    PositionComponent *enemyPos = (PositionComponent*)ecs_get(enemyEntId, CID_Position);
+    PositionComponent *playerPos = (PositionComponent*)ecs_get(playerEntId, CID_Position);
+    float distSqr = Vector2DistanceSqr(*enemyPos, *playerPos);
+    if(distSqr > activationDistance * activationDistance) return 0;
+    
+    context->intention->aimAt = Vector2Normalize(
+        Vector2Subtract(*playerPos, *enemyPos)
+    );
+    return 50;
+}
+
 void Perform_MeleeBite(AttackContext *context)
 {
     Spawn_Melee(context->intention->aimAt);
@@ -54,6 +85,7 @@ float AiPriority_MeleeBite(AttackContext *context)
         
         return 100;
     }
+    return 0;
 }
 
 void Attack_InitConfig()
@@ -67,7 +99,17 @@ void Attack_InitConfig()
         .performStrategy = Perform_EnergyBlast,
     };
 
+    configArr[ATK_ID_SHOT_FIREBALL] = (AttackConfig){
+        .cooldownTime = 8.0f,
+        .performStrategy = Perform_ShotFireball,
+        .aiPriorityStrategy = AiPriority_ShotFireball,
+    };
     configArr[ATK_ID_MELEE_BITE] = (AttackConfig){
+        .cooldownTime = 3.0f,
+        .performStrategy = Perform_MeleeBite,
+        .aiPriorityStrategy = AiPriority_MeleeBite,
+    };
+    configArr[ATK_ID_MELEE_CLAW] = (AttackConfig){
         .cooldownTime = 3.0f,
         .performStrategy = Perform_MeleeBite,
         .aiPriorityStrategy = AiPriority_MeleeBite,
