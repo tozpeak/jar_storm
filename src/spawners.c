@@ -133,13 +133,19 @@ Entity Spawn_Player(Vector2 position, char id)
     };
     HealthComponent hp = { 120, 120 };
     
+    PrimaryAttackComponent primAtt = { .attackId = ATK_ID_SHOT_PISTOLS };
+    SecondaryAttackComponent secAtt = { .attackId = ATK_ID_SHOT_ENERGY_BLAST };
+    
     ecs_add(e.id, CID_Position, &pos );
     ecs_add(e.id, CID_Velocity, &vel );
     ecs_add(e.id, CID_DrawShape, &shape );
     ecs_add(e.id, CID_Collider, &col );
     ecs_add(e.id, CID_Health, &hp );
+    ecs_add(e.id, CID_PrimaryAttack, &primAtt );
+    ecs_add(e.id, CID_SecondaryAttack, &secAtt );
     ecs_add(e.id, CID_PlayerId, &id );
     ecs_add(e.id, CID_HasHpBar, NULL );
+    ecs_add(e.id, CID_PlayerInput, NULL );
     
     return e;
 } 

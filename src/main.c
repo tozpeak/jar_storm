@@ -15,9 +15,15 @@ typedef struct
 {
     int width;
     int height;
+    Camera2D *camera;
 } ScreenSettings;
 
-const ScreenSettings g_screenSettings = { 640, 480 };
+Camera2D mainCamera = { 0 };
+const ScreenSettings g_screenSettings = { 
+    .width = 640, 
+    .height = 480,
+    .camera = &mainCamera,
+ };
 
 void DrawChessboard() 
 {
@@ -199,6 +205,66 @@ void System_EvaluateAiAttack()
     }
 }
 
+void System_PlayerInput()
+{
+    AttackIntentionComponent intention = { 0 };
+    AttackContext context = { .intention = &intention, };
+    Vector2 walkInput = Vector2Zero();
+    
+    Vector2 aimFromOffset = { 0, -12 }; //{ 0, -playerSize.y / 2 };
+    Vector2 aimDirection = { 0, 0 };
+    float playerSpeed = 16 * 4;
+    float shotCooldownState = 0;
+    float shotCooldown = 0.25f;
+    
+    uint32_t i;
+    QueryResult *qr = ecs_query(5, CID_Position, CID_PrimaryAttack, CID_SecondaryAttack, CID_PlayerId, CID_PlayerInput);
+    for (i = 0; i < qr->count; ++i) {
+        uint32_t playerEntId = qr->list[i];
+        
+        context.entityId = playerEntId;
+        
+        //PlayerIdComponent playerId = * (PlayerIdComponent*)ecs_get(playerEntId, CID_PlayerId);
+        
+        walkInput = Vector2Zero();
+        
+        if (IsKeyDown(KEY_D)) walkInput.x += 1;
+        if (IsKeyDown(KEY_A)) walkInput.x -= 1;
+        if (IsKeyDown(KEY_W)) walkInput.y -= 1;
+        if (IsKeyDown(KEY_S)) walkInput.y += 1;
+        
+        walkInput = Vector2Scale(
+            Vector2Normalize(walkInput),
+            playerSpeed
+        );
+        ecs_add(playerEntId, CID_Velocity, &walkInput);
+        
+        
+        PositionComponent* playerPos = (PositionComponent*)ecs_get(playerEntId, CID_Position);
+        
+        bool primaryInput = IsMouseButtonDown(0);
+        bool secondaryInput = IsMouseButtonDown(1);
+        
+        if (primaryInput || secondaryInput)
+        {
+            Vector2 aimTo = GetScreenToWorld2D(GetMousePosition(), *(g_screenSettings.camera));
+            Vector2 aimFrom = Vector2Add (*playerPos, aimFromOffset);
+            
+            aimDirection = Vector2Subtract(aimTo, aimFrom);
+            aimDirection = Vector2Normalize(aimDirection);
+            
+            context.intention->aimAt = aimDirection;
+            context.intention->isPrimary = primaryInput;
+            
+            ecs_add(playerEntId, CID_AttackIntention, context.intention);
+        }
+        else
+        {
+            ecs_remove(playerEntId, CID_AttackIntention);
+        }
+    }
+}
+
 void System_PerformAttack()
 {
     AttackContext context = { 0 };
@@ -248,6 +314,30 @@ void System_Draw()
 		
 		Shapes_Draw(pos, &shape->shape, shape->color);
 	}
+}
+
+void System_DrawPlayer()
+{
+    Vector2 playerSize = { 12, 24 };
+    Vector2 aimFromOffset = { 0, -12 }; //{ 0, -playerSize.y / 2 };
+    Vector2 aimDirection = { 0, 0 };
+    
+    uint32_t i;
+    QueryResult *qr = ecs_query(2, CID_Position, CID_PlayerId);
+    for (i = 0; i < qr->count; ++i) {
+        uint32_t playerEntId = qr->list[i];
+        
+        PositionComponent* playerPos = (PositionComponent*)ecs_get(playerEntId, CID_Position);
+        
+        Vector2 aimTo = GetScreenToWorld2D(GetMousePosition(), *(g_screenSettings.camera));
+        Vector2 aimFrom = Vector2Add (*playerPos, aimFromOffset);
+        
+        aimDirection = Vector2Subtract(aimTo, aimFrom);
+        aimDirection = Vector2Normalize(aimDirection);
+        
+        DrawCharacter(*playerPos, playerSize);
+        DrawGun(aimFrom, aimDirection);
+    }
 }
 
 void System_DrawEnemyHP() 
@@ -318,11 +408,11 @@ int main ()
 	InitWindow(g_screenSettings.width * screenScale, g_screenSettings.height * screenScale, "Hello Raylib");
 	//SetWindowSize(g_screenSettings.width * screenScale, g_screenSettings.height * screenScale);
 	
-    Camera2D camera = { 0 };
-    camera.target = (Vector2){ 0 };
-    camera.offset = (Vector2){ 0 }; //-g_screenSettings.width/2.0f, -g_screenSettings.height/2.0f };
-    camera.rotation = 0.0f;
-    camera.zoom = screenScale;
+    Camera2D *camera = g_screenSettings.camera;
+    camera->target = (Vector2){ 0 };
+    camera->offset = (Vector2){ 0 };
+    camera->rotation = 0.0f;
+    camera->zoom = screenScale;
 
 	
 	InitPhysics();
@@ -333,15 +423,6 @@ int main ()
 	    (Vector2) { 32, 32 },
 	    0
 	);
-	
-    Vector2 playerSize = { 12, 24 };
-    Vector2 aimFromOffset = { 0, -playerSize.y / 2 };
-    Vector2 aimDirection = { 0, 0 };
-    float playerSpeed = 16 * 4;
-    float shotCooldownState = 0;
-    float shotCooldown = 0.25f;
-    float bulletSpeed = 16 * 128;
-    float bigBulletSpeed = 16 * 16;
     
     for (int i = 1; i < 10; i++) {
         for (int j = 1; j < 8; j++) {
@@ -354,38 +435,7 @@ int main ()
 	{
         float delta = GetFrameTime();
         
-        Vector2 walkInput = Vector2Zero();
         
-        if (IsKeyDown(KEY_D)) walkInput.x += 1;
-        if (IsKeyDown(KEY_A)) walkInput.x -= 1;
-        if (IsKeyDown(KEY_W)) walkInput.y -= 1;
-        if (IsKeyDown(KEY_S)) walkInput.y += 1;
-        
-        walkInput = Vector2Scale(
-            Vector2Normalize(walkInput),
-            playerSpeed
-        );
-        
-        ecs_add(player.id, CID_Velocity, &walkInput);
-        PositionComponent* playerPos = (PositionComponent*)ecs_get(player.id, CID_Position);
-        
-        Vector2 aimTo = GetScreenToWorld2D(GetMousePosition(), camera);
-        Vector2 aimFrom = Vector2Add (*playerPos, aimFromOffset);
-        
-        aimDirection = Vector2Subtract(aimTo, aimFrom);
-        aimDirection = Vector2Normalize(aimDirection);
-        
-        shotCooldownState += delta;
-        
-        if (IsMouseButtonDown(0) && (shotCooldownState > shotCooldown)) {
-            Spawn_Bullet(aimFrom, aimDirection, bulletSpeed);
-            shotCooldownState = 0;
-        }
-        
-        if (IsMouseButtonPressed(1) && (shotCooldownState > shotCooldown)) {
-            Spawn_BigBullet(aimFrom, aimDirection, bigBulletSpeed);
-            shotCooldownState = 0;
-        }
         
         System_Move(delta);
         System_ClearCollisions();
@@ -393,6 +443,7 @@ int main ()
         
         System_UpdateAttackCooldown(delta);
         System_EvaluateAiAttack();
+        System_PlayerInput();
         System_PerformAttack();
         System_DealDamageNew();
         System_EnemyWanderer(delta);
@@ -407,14 +458,12 @@ int main ()
 		// Setup the back buffer for drawing (clear color and depth buffers)
 		ClearBackground(BLACK);
 		
-		BeginMode2D(camera);
+		BeginMode2D(*camera);
 		
 		DrawChessboard();
 		
         System_Draw();
-        
-		DrawCharacter(*playerPos, playerSize);
-		DrawGun(aimFrom, aimDirection);
+        System_DrawPlayer();
 		
         System_DrawDebugCollisions();
         

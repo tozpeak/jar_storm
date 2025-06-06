@@ -58,6 +58,7 @@ enum ComponentId
     CID_IsKilled,
     CID_IsWanderer,
     CID_AiAttack,
+    CID_PlayerInput,
     
     CID_Count
 };

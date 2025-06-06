@@ -7,6 +7,26 @@
 
 AttackConfig configArr[ATK_ID_COUNT] = { 0 };
 
+void Perform_ShotPistols(AttackContext *context)
+{
+    Vector2 aimFromOffset = { 0, -12 }; //{ 0, -playerSize.y / 2 };
+    PositionComponent* playerPos = (PositionComponent*)ecs_get(context->entityId, CID_Position);
+    Vector2 aimFrom = Vector2Add (*playerPos, aimFromOffset);
+    
+    float bulletSpeed = 16 * 128;
+    Spawn_Bullet(aimFrom, context->intention->aimAt, bulletSpeed);
+}
+
+void Perform_EnergyBlast(AttackContext *context)
+{
+    Vector2 aimFromOffset = { 0, -12 }; //{ 0, -playerSize.y / 2 };
+    PositionComponent* playerPos = (PositionComponent*)ecs_get(context->entityId, CID_Position);
+    Vector2 aimFrom = Vector2Add (*playerPos, aimFromOffset);
+    
+    float bulletSpeed = 16 * 16;
+    Spawn_BigBullet(aimFrom, context->intention->aimAt, bulletSpeed);
+}
+
 void Perform_MeleeBite(AttackContext *context)
 {
     Spawn_Melee(context->intention->aimAt);
@@ -38,6 +58,15 @@ float AiPriority_MeleeBite(AttackContext *context)
 
 void Attack_InitConfig()
 {
+    configArr[ATK_ID_SHOT_PISTOLS] = (AttackConfig){
+        .cooldownTime = 0.25f,
+        .performStrategy = Perform_ShotPistols,
+    };
+    configArr[ATK_ID_SHOT_ENERGY_BLAST] = (AttackConfig){
+        .cooldownTime = 5.0f,
+        .performStrategy = Perform_EnergyBlast,
+    };
+
     configArr[ATK_ID_MELEE_BITE] = (AttackConfig){
         .cooldownTime = 3.0f,
         .performStrategy = Perform_MeleeBite,

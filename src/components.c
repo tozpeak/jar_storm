@@ -27,6 +27,9 @@ void InitComponents()
         0, //CID_HasHpBar
         0, //CID_IsKilled
         0, //CID_IsWanderer
-        0 //CID_AiAttack
+        0, //CID_AiAttack
+        0, //CID_PlayerInput
+        
+        0 //CID_Count
     );
 }

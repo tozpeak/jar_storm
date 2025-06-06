@@ -17,8 +17,8 @@ C99 was chosen as an old standard, which is still in use. To better understand t
     - target: self, other, both
     - ~~damage layer mask~~
 
-- [ ] Move player to ECS
-- [ ] Move input to ECS
+- [x] Move player to ECS
+- [x] Move input to ECS
 
 - [ ] Level layout
 - [ ] Progression
@@ -26,11 +26,13 @@ C99 was chosen as an old standard, which is still in use. To better understand t
 - [ ] Items
 - [ ] Chests
 
-- [ ] Melee attacks
+- [x] Melee attacks
 - [x] Implement raycast (for alternative bullets)
 - [ ] Enemy behaviour:
     - [ ] make structure for flow field calculation,
-    - [ ] make components for more interesting enemy behaviour,
+    - [ ] make components for more interesting enemy behaviour:
+        - [x] attack abilities,
+        - [ ] targeted movement,
     - [ ] FSM or behaviour trees
 
 - [x] Split the main.c
