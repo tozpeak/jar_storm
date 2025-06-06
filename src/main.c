@@ -69,29 +69,29 @@ void DrawGun (Vector2 aimFrom, Vector2 aimDirection)
 void System_Move(float deltaTime) 
 {
     uint32_t i;
-	QueryResult *qr = ecs_query(2, CID_Position, CID_Velocity);
-	for (i = 0; i < qr->count; ++i) {
-		PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
-		VelocityComponent *vel = (VelocityComponent*)ecs_get(qr->list[i], CID_Velocity);
-		pos->x += vel->x * deltaTime;
-		pos->y += vel->y * deltaTime;
-		/*if (pos->x > RENDER_WIDTH || pos->x < 0)
-			vel->x *= -1;
-		if (pos->y > RENDER_HEIGHT || pos->y < 0)
-			vel->y *= -1;*/
-	}
+    QueryResult *qr = ecs_query(2, CID_Position, CID_Velocity);
+    for (i = 0; i < qr->count; ++i) {
+        PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
+        VelocityComponent *vel = (VelocityComponent*)ecs_get(qr->list[i], CID_Velocity);
+        pos->x += vel->x * deltaTime;
+        pos->y += vel->y * deltaTime;
+        /*if (pos->x > RENDER_WIDTH || pos->x < 0)
+            vel->x *= -1;
+        if (pos->y > RENDER_HEIGHT || pos->y < 0)
+            vel->y *= -1;*/
+    }
 }
 
 
 void System_DealDamageNew()
 {
     uint32_t i;
-	QueryResult *qr = ecs_query(2, CID_DealDamage, CID_HasCollisions);
-	for (i = 0; i < qr->count; ++i) {
-	    uint32_t entA = qr->list[i];
+    QueryResult *qr = ecs_query(2, CID_DealDamage, CID_HasCollisions);
+    for (i = 0; i < qr->count; ++i) {
+        uint32_t entA = qr->list[i];
         DealDamageComponent *dam = (DealDamageComponent*)ecs_get(entA, CID_DealDamage);
-		HasCollisionsComponent *hc = (HasCollisionsComponent*)ecs_get(entA, CID_HasCollisions);
-		
+        HasCollisionsComponent *hc = (HasCollisionsComponent*)ecs_get(entA, CID_HasCollisions);
+        
         CollisionIterator iterator = { 0 };
         InitCollisionIterator(&iterator, entA);
         while (TryGetNextCollision(&iterator)) {
@@ -100,22 +100,22 @@ void System_DealDamageNew()
             
             if (dam->target & DMG_OTHER
                 && ecs_has(entB, CID_Health)) {
-		        HealthComponent *hp = (HealthComponent*)ecs_get(entB, CID_Health);
-		        
-		        hp->hp -= dam->damage;
-		        if(hp->hp <= 0) ecs_add(entB, CID_IsKilled, NULL);
+                HealthComponent *hp = (HealthComponent*)ecs_get(entB, CID_Health);
+                
+                hp->hp -= dam->damage;
+                if(hp->hp <= 0) ecs_add(entB, CID_IsKilled, NULL);
             }
-		    
-		    if (dam->target & DMG_SELF
-		        && ecs_has(entA, CID_Health))
-		    {
-		        HealthComponent *hpDam = (HealthComponent*)ecs_get(entA, CID_Health);
-		        hpDam->hp -= dam->damage;
-		        if(hpDam->hp <= 0) ecs_add(entA, CID_IsKilled, NULL);
-		    }
+            
+            if (dam->target & DMG_SELF
+                && ecs_has(entA, CID_Health))
+            {
+                HealthComponent *hpDam = (HealthComponent*)ecs_get(entA, CID_Health);
+                hpDam->hp -= dam->damage;
+                if(hpDam->hp <= 0) ecs_add(entA, CID_IsKilled, NULL);
+            }
         }
         
-	}
+    }
 }
 
 void System_EnemyWanderer(float deltaTime)
@@ -126,18 +126,18 @@ void System_EnemyWanderer(float deltaTime)
     
     uint32_t i;
     QueryResult *qr = ecs_query(2, CID_Velocity, CID_IsWanderer);
-	for (i = 0; i < qr->count; ++i) {
-	    if (rand() % CHANCE_SAMPLE_SIZE > changeDirProbability) continue;
-	    
-		VelocityComponent *vel = (VelocityComponent*)ecs_get(qr->list[i], CID_Velocity);
-		
-		VelocityComponent newVel = Vector2Rotate(
-		    *vel,
-		    (rand() % 628) / 100.0f
-		);
-		
-		*vel = newVel;
-	}
+    for (i = 0; i < qr->count; ++i) {
+        if (rand() % CHANCE_SAMPLE_SIZE > changeDirProbability) continue;
+        
+        VelocityComponent *vel = (VelocityComponent*)ecs_get(qr->list[i], CID_Velocity);
+        
+        VelocityComponent newVel = Vector2Rotate(
+            *vel,
+            (rand() % 628) / 100.0f
+        );
+        
+        *vel = newVel;
+    }
 }
 
 void UpdateAbilityCooldown(AttackAbility *ability, float delta)
@@ -162,8 +162,8 @@ void System_UpdateAttackCooldown(float deltaTime)
         
         if (ecs_has(qr->list[i], CID_SecondaryAttack))
         {
-	        SecondaryAttackComponent *secAtt = (SecondaryAttackComponent*) ecs_get(qr->list[i], CID_SecondaryAttack);
-	        UpdateAbilityCooldown(secAtt, deltaTime);
+            SecondaryAttackComponent *secAtt = (SecondaryAttackComponent*) ecs_get(qr->list[i], CID_SecondaryAttack);
+            UpdateAbilityCooldown(secAtt, deltaTime);
         }
     }
 }
@@ -189,8 +189,8 @@ void System_EvaluateAiAttack()
                 .isPrimary = false
             };
             secondaryContext.entityId = qr->list[i];
-	        secondaryContext.ability = (SecondaryAttackComponent*) ecs_get(qr->list[i], CID_SecondaryAttack);
-	        secondaryContext.intention = &secondaryIntention;
+            secondaryContext.ability = (SecondaryAttackComponent*) ecs_get(qr->list[i], CID_SecondaryAttack);
+            secondaryContext.intention = &secondaryIntention;
             Attack_EvaluateAi( &secondaryContext );
         }
         
@@ -289,31 +289,31 @@ void System_PerformAttack()
 void System_SaveKilledPlayer()
 {
     uint32_t i;
-	QueryResult *qr = ecs_query(2, CID_IsKilled, CID_PlayerId);
-	for (i = 0; i < qr->count; ++i) {
-		ecs_remove(qr->list[i], CID_IsKilled);
-	}
+    QueryResult *qr = ecs_query(2, CID_IsKilled, CID_PlayerId);
+    for (i = 0; i < qr->count; ++i) {
+        ecs_remove(qr->list[i], CID_IsKilled);
+    }
 }
 
 void System_DestroyKilled()
 {
     uint32_t i;
-	QueryResult *qr = ecs_query(1, CID_IsKilled);
-	for (i = 0; i < qr->count; ++i) {
-		ecs_kill(qr->list[i]);
-	}
+    QueryResult *qr = ecs_query(1, CID_IsKilled);
+    for (i = 0; i < qr->count; ++i) {
+        ecs_kill(qr->list[i]);
+    }
 }
 
 void System_Draw() 
 {
     uint32_t i;
-	QueryResult *qr = ecs_query(2, CID_Position, CID_DrawShape);
-	for (i = 0; i < qr->count; ++i) {
-		PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
-		DrawShapeComponent *shape = (DrawShapeComponent*)ecs_get(qr->list[i], CID_DrawShape);
-		
-		Shapes_Draw(pos, &shape->shape, shape->color);
-	}
+    QueryResult *qr = ecs_query(2, CID_Position, CID_DrawShape);
+    for (i = 0; i < qr->count; ++i) {
+        PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
+        DrawShapeComponent *shape = (DrawShapeComponent*)ecs_get(qr->list[i], CID_DrawShape);
+        
+        Shapes_Draw(pos, &shape->shape, shape->color);
+    }
 }
 
 void System_DrawPlayer()
@@ -345,51 +345,84 @@ void System_DrawEnemyHP()
     Vector2 offset = { 0, 3 };
     Vector2 right = { 1, 0 };
     uint32_t i;
-	QueryResult *qr = ecs_query(3, CID_Position, CID_Health, CID_HasHpBar);
-	for (i = 0; i < qr->count; ++i) {
-		PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
-		HealthComponent *hp = (HealthComponent*)ecs_get(qr->list[i], CID_Health);
-		
-		float maxHp = hp->maxHp;
-		
-		float sizeFactor = 4 * log2(maxHp)/maxHp;
-		Vector2 lp = Vector2Add(
-		    Vector2Add(*pos, offset),
-		    Vector2Scale(right, - maxHp * sizeFactor / 2)
-	    );
-	    Vector2 rpFull = Vector2Add( lp, Vector2Scale(right, maxHp * sizeFactor) );
-	    Vector2 rpPart = Vector2Add( lp, Vector2Scale(right, hp->hp * sizeFactor) );
-	    
-	    DrawLineEx( lp, rpFull, 4, GRAY );
-	    DrawLineEx( lp, rpPart, 2, RED );
-	}
+    QueryResult *qr = ecs_query(3, CID_Position, CID_Health, CID_HasHpBar);
+    for (i = 0; i < qr->count; ++i) {
+        PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
+        HealthComponent *hp = (HealthComponent*)ecs_get(qr->list[i], CID_Health);
+        
+        float maxHp = hp->maxHp;
+        
+        float sizeFactor = 4 * log2(maxHp)/maxHp;
+        Vector2 lp = Vector2Add(
+            Vector2Add(*pos, offset),
+            Vector2Scale(right, - maxHp * sizeFactor / 2)
+        );
+        Vector2 rpFull = Vector2Add( lp, Vector2Scale(right, maxHp * sizeFactor) );
+        Vector2 rpPart = Vector2Add( lp, Vector2Scale(right, hp->hp * sizeFactor) );
+        
+        DrawLineEx( lp, rpFull, 4, GRAY );
+        DrawLineEx( lp, rpPart, 2, RED );
+    }
 }
 
 void System_DrawDebugCollisions()
 {
     uint32_t i;
-	QueryResult *qr = ecs_query(3, CID_Position, CID_DrawShape, CID_HasCollisions);
-	for (i = 0; i < qr->count; ++i) {
-		PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
-		DrawShapeComponent *shape = (DrawShapeComponent*)ecs_get(qr->list[i], CID_DrawShape);
-		Color color = RED;
-		
-		Shapes_Draw(pos, &shape->shape, color);
-	}
+    QueryResult *qr = ecs_query(3, CID_Position, CID_DrawShape, CID_HasCollisions);
+    for (i = 0; i < qr->count; ++i) {
+        PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
+        DrawShapeComponent *shape = (DrawShapeComponent*)ecs_get(qr->list[i], CID_DrawShape);
+        Color color = RED;
+        
+        Shapes_Draw(pos, &shape->shape, color);
+    }
 }
 
 void System_KillOutOfBounds() 
 {
     uint32_t i;
-	QueryResult *qr = ecs_query(1, CID_Position);
-	for (i = 0; i < qr->count; ++i) {
-		PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
-		if (pos->x > g_screenSettings.width 
-	     || pos->x < 0
-	     || pos->y > g_screenSettings.height
-	     || pos->y < 0
-	    ) ecs_add(qr->list[i], CID_IsKilled, NULL);
-	}
+    QueryResult *qr = ecs_query(1, CID_Position);
+    for (i = 0; i < qr->count; ++i) {
+        PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
+        if (pos->x > g_screenSettings.width 
+         || pos->x < 0
+         || pos->y > g_screenSettings.height
+         || pos->y < 0
+        ) ecs_add(qr->list[i], CID_IsKilled, NULL);
+    }
+}
+
+
+void Systems_GameLoop()
+{
+    float delta = GetFrameTime();
+        
+    System_Move(delta);
+    System_ClearCollisions();
+    System_Collide(delta);
+    
+    System_UpdateAttackCooldown(delta);
+    System_EvaluateAiAttack();
+    System_PlayerInput();
+    System_PerformAttack();
+    System_DealDamageNew();
+    System_EnemyWanderer(delta);
+    
+    System_KillOutOfBounds();
+    System_SaveKilledPlayer();
+    System_DestroyKilled();
+}
+
+void Systems_DrawLoop()
+{
+    DrawChessboard();
+    
+    System_Draw();
+    System_DrawPlayer();
+
+    System_DrawDebugCollisions();
+
+    System_DrawEnemyHP();
 }
 
 int test_main();
@@ -398,31 +431,31 @@ int main ()
 {
     //return test_main();
 
-	// Tell the window to use vsync and work on high DPI displays
-	//SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
-	//SetTargetFPS(120);
+    // Tell the window to use vsync and work on high DPI displays
+    //SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
+    //SetTargetFPS(120);
 
-	// Create the window and OpenGL context
-	const int screenScale = 2;
-	
-	InitWindow(g_screenSettings.width * screenScale, g_screenSettings.height * screenScale, "Hello Raylib");
-	//SetWindowSize(g_screenSettings.width * screenScale, g_screenSettings.height * screenScale);
-	
+    // Create the window and OpenGL context
+    const int screenScale = 2;
+
+    InitWindow(g_screenSettings.width * screenScale, g_screenSettings.height * screenScale, "Hello Raylib");
+    //SetWindowSize(g_screenSettings.width * screenScale, g_screenSettings.height * screenScale);
+
     Camera2D *camera = g_screenSettings.camera;
     camera->target = (Vector2){ 0 };
     camera->offset = (Vector2){ 0 };
     camera->rotation = 0.0f;
     camera->zoom = screenScale;
 
-	
-	InitPhysics();
-	InitComponents();
-	Attack_InitConfig();
-	
-	Entity player = Spawn_Player(
-	    (Vector2) { 32, 32 },
-	    0
-	);
+
+    InitPhysics();
+    InitComponents();
+    Attack_InitConfig();
+
+    Entity player = Spawn_Player(
+        (Vector2) { 32, 32 },
+        0
+    );
     
     for (int i = 1; i < 10; i++) {
         for (int j = 1; j < 8; j++) {
@@ -430,44 +463,20 @@ int main ()
         }
     }
 
-	// game loop
-	while (!WindowShouldClose())		// run the loop untill the user presses ESCAPE or presses the Close button on the window
-	{
-        float delta = GetFrameTime();
+    // game loop
+    while (!WindowShouldClose())        // run the loop untill the user presses ESCAPE or presses the Close button on the window
+    {
+        Systems_GameLoop();
         
-        
-        
-        System_Move(delta);
-        System_ClearCollisions();
-        System_Collide(delta);
-        
-        System_UpdateAttackCooldown(delta);
-        System_EvaluateAiAttack();
-        System_PlayerInput();
-        System_PerformAttack();
-        System_DealDamageNew();
-        System_EnemyWanderer(delta);
-        
-        System_KillOutOfBounds();
-        System_SaveKilledPlayer();
-        System_DestroyKilled();
-        
-		// drawing
-		BeginDrawing();
+        // drawing
+        BeginDrawing();
 
-		// Setup the back buffer for drawing (clear color and depth buffers)
-		ClearBackground(BLACK);
-		
-		BeginMode2D(*camera);
-		
-		DrawChessboard();
-		
-        System_Draw();
-        System_DrawPlayer();
-		
-        System_DrawDebugCollisions();
-        
-        System_DrawEnemyHP();
+        // Setup the back buffer for drawing (clear color and depth buffers)
+        ClearBackground(BLACK);
+
+        BeginMode2D(*camera);
+
+        Systems_DrawLoop();
         
         EndMode2D();
         
@@ -483,33 +492,33 @@ int main ()
             1, 24 * 2,
             16, DARKGREEN
         );
-		
-		// end the frame and get ready for the next one  (display frame, poll input, etc...)
-		EndDrawing();
-	}
-	// destroy the window and cleanup the OpenGL context
-	CloseWindow();
-	return 0;
+
+        // end the frame and get ready for the next one  (display frame, poll input, etc...)
+        EndDrawing();
+    }
+    // destroy the window and cleanup the OpenGL context
+    CloseWindow();
+    return 0;
 }
 
 int test_main() 
 {
-	// Create the window and OpenGL context
-	InitWindow(g_screenSettings.width, g_screenSettings.height, "Hello Raylib");
-	
-	InitPhysics();
-	InitComponents();
-	Attack_InitConfig();
-	
-	Entity e;
-	Shape shape;
-	
-	//enemy
-	e = ecs_create();
-	float radius = 12;
-	shape = Shapes_NewCircle(Vector2Zero(), 12);
+    // Create the window and OpenGL context
+    InitWindow(g_screenSettings.width, g_screenSettings.height, "Hello Raylib");
+
+    InitPhysics();
+    InitComponents();
+    Attack_InitConfig();
+
+    Entity e;
+    Shape shape;
+
+    //enemy
+    e = ecs_create();
+    float radius = 12;
+    shape = Shapes_NewCircle(Vector2Zero(), 12);
     PositionComponent pos = { 0, 64 };
-	VelocityComponent vel = { 16, 0 };
+    VelocityComponent vel = { 16, 0 };
     DrawShapeComponent draw = { WHITE, shape };
     ColliderComponent col = { 
         shape, 
@@ -522,8 +531,8 @@ int test_main()
     ecs_add(e.id, CID_Collider, &col );
     
     
-	//static bullet
-	e = ecs_create();
+    //static bullet
+    e = ecs_create();
     shape = Shapes_NewLine(Vector2Zero(), (Vector2){ 64, 64 });
     pos = (Vector2) { 64, 64 + 8 };
     draw = (DrawShapeComponent) { GOLD, shape };
@@ -536,8 +545,8 @@ int test_main()
     ecs_add(e.id, CID_DrawShape, &draw );
     ecs_add(e.id, CID_Collider, &col );
     
-	//moving wall
-	e = ecs_create();
+    //moving wall
+    e = ecs_create();
     shape = Shapes_NewLine(Vector2Zero(), (Vector2){ -16, 128 });
     pos = (Vector2) { 32, 64 };
     vel = (Vector2) { 16, 0 };
@@ -552,46 +561,31 @@ int test_main()
     ecs_add(e.id, CID_DrawShape, &draw );
     ecs_add(e.id, CID_Collider, &col );
     
-	
-    while (!WindowShouldClose())		// run the loop untill the user presses ESCAPE or presses the Close button on the window
-	{
-        float delta = GetFrameTime();
+    
+    while (!WindowShouldClose())        // run the loop untill the user presses ESCAPE or presses the Close button on the window
+    {
+        Systems_GameLoop();
         
-        System_Move(delta);
-        System_ClearCollisions();
-        System_Collide(delta);
-        
-                
-        System_UpdateAttackCooldown(delta);
-        System_EvaluateAiAttack();
-        System_PerformAttack();
-        System_DealDamageNew();
-        //System_EnemyWanderer(delta);
-        
-        System_KillOutOfBounds();
-        System_SaveKilledPlayer();
-        System_DestroyKilled();
-        
-		// drawing
-		BeginDrawing();
+        // drawing
+        BeginDrawing();
 
-		// Setup the back buffer for drawing (clear color and depth buffers)
-		ClearBackground(BLACK);
-		
-		DrawChessboard();
+        // Setup the back buffer for drawing (clear color and depth buffers)
+        ClearBackground(BLACK);
 
-		//DrawCharacter(playerPos, playerSize);
-		//DrawGun(aimFrom, aimDirection);
-		
+        DrawChessboard();
+
+        //DrawCharacter(playerPos, playerSize);
+        //DrawGun(aimFrom, aimDirection);
+
         System_Draw();
         System_DrawDebugCollisions();
         
         System_DrawEnemyHP();
-		
-		// end the frame and get ready for the next one  (display frame, poll input, etc...)
-		EndDrawing();
-	}
-	// destroy the window and cleanup the OpenGL context
-	CloseWindow();
-	return 0;
+
+        // end the frame and get ready for the next one  (display frame, poll input, etc...)
+        EndDrawing();
+    }
+    // destroy the window and cleanup the OpenGL context
+    CloseWindow();
+    return 0;
 }
