@@ -286,6 +286,44 @@ void System_PerformAttack()
     }
 }
 
+void SpawnEntireFieldOfEnemies()
+{
+    for (int i = 1; i < 10; i++) {
+        for (int j = 1; j < 8; j++) {
+            Vector2 position = { i * 16 * 4, j * 16 * 4 };
+            bool even = (i % 2 == 0) && (j % 2 == 0);
+            if (even)
+                Spawn_Enemy_Lizard(position);
+            else
+                Spawn_Enemy(position);
+        }
+    }
+}
+
+void System_SpawnRandomUnit(float deltaTime)
+{
+    const int CHANCE_SAMPLE_SIZE = 100000;
+    
+    float changeDirProbabilityF = deltaTime * 1 / 3; // once in 8 seconds
+    int changeDirProbability = round(CHANCE_SAMPLE_SIZE * changeDirProbabilityF);
+    
+    if(rand() % CHANCE_SAMPLE_SIZE > changeDirProbability) return;
+    
+    bool isLizard = (rand() % 4 == 0);
+    
+    int spawnMargin = 16 * 4;
+    
+    Vector2 position = {
+        .x = ( rand() % (g_screenSettings.width  - 2 * spawnMargin) + spawnMargin ),
+        .y = ( rand() % (g_screenSettings.height - 2 * spawnMargin) + spawnMargin ),
+    };
+    
+    if (isLizard)
+        Spawn_Enemy_Lizard(position);
+    else
+        Spawn_Enemy(position);
+}
+
 void System_SaveKilledPlayer()
 {
     uint32_t i;
@@ -407,6 +445,7 @@ void Systems_GameLoop()
     System_PerformAttack();
     System_DealDamageNew();
     System_EnemyWanderer(delta);
+    System_SpawnRandomUnit(delta);
     
     System_KillOutOfBounds();
     System_SaveKilledPlayer();
@@ -457,11 +496,7 @@ int main ()
         0
     );
     
-    for (int i = 1; i < 10; i++) {
-        for (int j = 1; j < 8; j++) {
-            Spawn_Enemy((Vector2) { i * 16 * 4, j * 16 * 4 } );
-        }
-    }
+    //SpawnEntireFieldOfEnemies();
 
     // game loop
     while (!WindowShouldClose())        // run the loop untill the user presses ESCAPE or presses the Close button on the window
