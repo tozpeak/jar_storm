@@ -162,3 +162,27 @@ ecs_query(uint32_t n, ...)
 	}
 	return &state.query_result;
 }
+
+void
+ecs_query_ex(QueryResult *result, uint32_t n, ...)
+{
+	va_list ap;
+	uint32_t i, mask = 0;
+
+	result->count = 0;
+
+	va_start(ap, n);
+	for (i = 0; i < n; ++i) {
+		mask |= (1 << va_arg(ap, uint32_t));
+	}
+	va_end(ap);
+	
+	if(result->cap < 1) return;
+
+	for (i = 0; i < state.entity_store.count; ++i) {
+		if (0 != (state.entity_store.flag_array[i] & ENTITY_FLAG_ALIVE) && mask == (state.entity_store.mask_array[i] & mask)) {
+			result->list[result->count++] = i;
+			if(result->count >= result->cap) return;
+		}
+	}
+}

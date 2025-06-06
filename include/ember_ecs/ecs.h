@@ -60,4 +60,9 @@ void ecs_kill(uint32_t entity_id);
  */
 QueryResult *ecs_query(uint32_t component_count, ...);
 
+/**
+ * Use external QueryResult to find [1..cap] entities which have components with IDs.
+ */
+void ecs_query_ex(QueryResult *result, uint32_t n, ...);
+
 #endif

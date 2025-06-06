@@ -36,10 +36,11 @@ C99 was chosen as an old standard, which is still in use. To better understand t
     - [ ] FSM or behaviour trees
 
 - [x] Split the main.c
+- [ ] Refactor attacks and spawners to make more generic code
 - [ ] Extend ECS
     - [ ] make access for flag components to use entity_store.flag_array (too free some space in bitmask for actual data-containing components)
     - [ ] make more complex queries, for example with option to exclude components
-    - [ ] make a way to have several query buffers for systems that benefit from cross-comparing entity sets (this may speed up enumerating only valid pairs)
+    - [x] make a way to have several query buffers for systems that benefit from cross-comparing entity sets (this may speed up enumerating only valid pairs)
 
 # Known Issues
 
