@@ -452,6 +452,14 @@ void System_DrawDebugCollisions()
     }
 }
 
+bool System_DebugPause()
+{
+    static bool isPaused = false;
+    
+    if(IsKeyPressed(KEY_P)) isPaused = !isPaused;
+    return isPaused;
+}
+
 void System_KillOutOfBounds() 
 {
     uint32_t i;
@@ -469,6 +477,9 @@ void System_KillOutOfBounds()
 
 void Systems_GameLoop()
 {
+    bool globalPause = System_DebugPause();
+    if(globalPause) return;
+
     float delta = GetFrameTime();
         
     System_Move(delta);
