@@ -118,11 +118,48 @@ void System_DealDamageNew()
     }
 }
 
+void System_KeepWandererInBounds()
+{
+    
+    Rectangle levelBounds = {
+        16,
+        3 * 12,
+        g_screenSettings.width - 16 * 2,
+        g_screenSettings.height - 12 * 4,
+    };
+    Vector2 levelCenter = {
+        g_screenSettings.width / 2,
+        g_screenSettings.height / 2,
+    };
+    VelocityComponent newVel;
+    
+    uint32_t i;
+    QueryResult *qr = ecs_query(3, CID_Position, CID_Velocity, CID_IsWanderer);
+    for (i = 0; i < qr->count; ++i) {
+        PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
+        
+        if ( !CheckCollisionPointRec(*pos, levelBounds) )
+        {
+            VelocityComponent *vel = (VelocityComponent*)ecs_get(qr->list[i], CID_Velocity);
+            float velLinear = Vector2Length(*vel);
+            newVel = Vector2Scale(
+                Vector2Normalize( 
+                    Vector2Subtract (levelCenter, *pos) 
+                ),
+                velLinear
+            );
+            
+            *vel = newVel;
+        }
+    }
+}
+
 void System_EnemyWanderer(float deltaTime)
 {
     const int CHANCE_SAMPLE_SIZE = 100000;
     float changeDirProbabilityF = deltaTime * 1 / 5; // once in 5 seconds
     int changeDirProbability = round(CHANCE_SAMPLE_SIZE * changeDirProbabilityF);
+    VelocityComponent newVel;
     
     uint32_t i;
     QueryResult *qr = ecs_query(2, CID_Velocity, CID_IsWanderer);
@@ -131,11 +168,10 @@ void System_EnemyWanderer(float deltaTime)
         
         VelocityComponent *vel = (VelocityComponent*)ecs_get(qr->list[i], CID_Velocity);
         
-        VelocityComponent newVel = Vector2Rotate(
+        newVel = Vector2Rotate(
             *vel,
             (rand() % 628) / 100.0f
         );
-        
         *vel = newVel;
     }
 }
@@ -445,6 +481,7 @@ void Systems_GameLoop()
     System_PerformAttack();
     System_DealDamageNew();
     System_EnemyWanderer(delta);
+    System_KeepWandererInBounds();
     System_SpawnRandomUnit(delta);
     
     System_KillOutOfBounds();
