@@ -304,7 +304,7 @@ void System_SpawnRandomUnit(float deltaTime)
 {
     const int CHANCE_SAMPLE_SIZE = 100000;
     
-    float changeDirProbabilityF = deltaTime * 1 / 3; // once in 8 seconds
+    float changeDirProbabilityF = deltaTime * 2 / 5;
     int changeDirProbability = round(CHANCE_SAMPLE_SIZE * changeDirProbabilityF);
     
     if(rand() % CHANCE_SAMPLE_SIZE > changeDirProbability) return;

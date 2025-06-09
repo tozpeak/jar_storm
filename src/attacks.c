@@ -36,7 +36,7 @@ void Perform_ShotFireball(AttackContext *context)
 
 float AiPriority_ShotFireball(AttackContext *context)
 {
-    float activationDistance = 16 * 8;
+    float activationDistance = 16 * 12;
     
     if (context->ability->cooldown > 0) return 0;
     

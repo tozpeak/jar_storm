@@ -6,6 +6,12 @@
 
 #include <spawners.h>
 
+void SetAttackSpawnCooldown(AttackAbility *attack)
+{
+    attack->state = ATK_ST_COOLDOWN;
+    attack->cooldown = 5;
+}
+
 void Spawn_Melee(Vector2 aimDirection)
 {
     float radius = 6.0f;
@@ -129,6 +135,7 @@ uint32_t Spawn_Enemy(Vector2 position)
     HealthComponent hp = { 24, 32 };
     
     PrimaryAttackComponent primAtt = { .attackId = ATK_ID_MELEE_BITE };
+    SetAttackSpawnCooldown(&primAtt);
     
     ecs_add(e.id, CID_Position, &pos );
     ecs_add(e.id, CID_Velocity, &vel );
@@ -161,6 +168,8 @@ uint32_t Spawn_Enemy_Lizard(Vector2 position)
     
     PrimaryAttackComponent primAtt = { .attackId = ATK_ID_MELEE_CLAW };
     SecondaryAttackComponent secAtt = { .attackId = ATK_ID_SHOT_FIREBALL };
+    SetAttackSpawnCooldown(&primAtt);
+    SetAttackSpawnCooldown(&secAtt);
     
     ecs_add(e.id, CID_Position, &pos );
     ecs_add(e.id, CID_Velocity, &vel );
