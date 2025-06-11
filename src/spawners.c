@@ -118,6 +118,24 @@ void Spawn_BigBullet(Vector2 aimFrom, Vector2 aimDirection, float speed)
     //ecs_add(e.id, CID_HasHpBar, NULL );
 }
 
+uint32_t Spawn_Pillar(Vector2 position)
+{
+    float radius = 6.0f;
+    Entity e = ecs_create();
+    PositionComponent pos = position;
+    
+    DrawShapeComponent shape = { BEIGE, Shapes_NewCircle(Vector2Zero(), radius) };
+    ColliderComponent col = {
+        Shapes_NewCircle(Vector2Zero(), radius),
+        (Layer)LN_WALL
+    };
+    
+    ecs_add(e.id, CID_Position, &pos );
+    ecs_add(e.id, CID_DrawShape, &shape );
+    ecs_add(e.id, CID_Collider, &col );
+    
+    return e.id;
+}
 
 uint32_t Spawn_Teleporter(Vector2 position) 
 {

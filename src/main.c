@@ -1,6 +1,7 @@
 //#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <time.h>
 #include <math.h>
 #include <raylib.h>
 #include <raymath.h>
@@ -539,6 +540,29 @@ void Systems_DrawLoop()
     System_DrawEnemyHP();
 }
 
+void GenerateLevel()
+{
+    int pillarCount = 20;
+
+    int screenX = g_screenSettings.width, screenY = g_screenSettings.height;
+    Vector2 tileSize = g_screenSettings.tileSize;
+    Rectangle levelRect = {
+        g_screenSettings.marginTiles * tileSize.x,
+        g_screenSettings.marginTopTiles * tileSize.y,
+        screenX - ( g_screenSettings.marginTiles * 2 ) * tileSize.x,
+        screenY - ( g_screenSettings.marginTiles + g_screenSettings.marginTopTiles ) * tileSize.y,
+    };
+
+    Spawn_Teleporter((Vector2) { screenX - 32, screenY - 32 } );
+    
+    for (int i = 0; i < pillarCount; i++) {
+        Spawn_Pillar( (Vector2) {
+            rand() % (int)round(levelRect.width) + levelRect.x,
+            rand() % (int)round(levelRect.height) + levelRect.y,
+        } );
+    }
+}
+
 int test_main();
 
 int main ()
@@ -565,13 +589,15 @@ int main ()
     InitPhysics();
     InitComponents();
     Attack_InitConfig();
+    
+    srand(time(NULL));
 
     Entity player = Spawn_Player(
         (Vector2) { 32, 32 },
         0
     );
     
-    Spawn_Teleporter((Vector2) { g_screenSettings.width - 32, g_screenSettings.height - 32 } );
+    GenerateLevel();
     
     //SpawnEntireFieldOfEnemies();
 
