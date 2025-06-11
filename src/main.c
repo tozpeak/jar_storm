@@ -710,15 +710,7 @@ int test_main()
         // Setup the back buffer for drawing (clear color and depth buffers)
         ClearBackground(BLACK);
 
-        DrawChessboard();
-
-        //DrawCharacter(playerPos, playerSize);
-        //DrawGun(aimFrom, aimDirection);
-
-        System_Draw();
-        System_DrawDebugCollisions();
-        
-        System_DrawEnemyHP();
+        Systems_DrawLoop();
 
         // end the frame and get ready for the next one  (display frame, poll input, etc...)
         EndDrawing();
