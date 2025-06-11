@@ -10,6 +10,7 @@
 #include <physics.h>
 #include <shapes.h>
 #include <spawners.h>
+#include <helpers.h>
 
 typedef struct
 {
@@ -99,8 +100,10 @@ void System_Move(float deltaTime)
 }
 
 
-void System_DealDamageNew()
+void System_DealDamageNew(float delta)
 {
+    SYSTEM_TIMER(delta, 0.1f);
+    
     uint32_t i;
     QueryResult *qr = ecs_query(2, CID_DealDamage, CID_HasCollisions);
     for (i = 0; i < qr->count; ++i) {
@@ -108,25 +111,30 @@ void System_DealDamageNew()
         DealDamageComponent *dam = (DealDamageComponent*)ecs_get(entA, CID_DealDamage);
         HasCollisionsComponent *hc = (HasCollisionsComponent*)ecs_get(entA, CID_HasCollisions);
         
+        bool onTick = dam->flags & DMG_ON_TICK;
+        if(onTick && timer_ticks < 1) continue;
+        
+        short dmgMult = onTick ? (short)timer_ticks : 1;
+        
         CollisionIterator iterator = { 0 };
         InitCollisionIterator(&iterator, entA);
         while (TryGetNextCollision(&iterator)) {
             uint32_t entB = iterator.other;
             CollisionData* cData = iterator.collisionData;
             
-            if (dam->target & DMG_OTHER
+            if (dam->flags & DMG_TARGET_OTHER
                 && ecs_has(entB, CID_Health)) {
                 HealthComponent *hp = (HealthComponent*)ecs_get(entB, CID_Health);
                 
-                hp->hp -= dam->damage;
+                hp->hp -= dam->damage * dmgMult;
                 if(hp->hp <= 0) ecs_add(entB, CID_IsKilled, NULL);
             }
             
-            if (dam->target & DMG_SELF
+            if (dam->flags & DMG_TARGET_SELF
                 && ecs_has(entA, CID_Health))
             {
                 HealthComponent *hpDam = (HealthComponent*)ecs_get(entA, CID_Health);
-                hpDam->hp -= dam->damage;
+                hpDam->hp -= dam->damage * dmgMult;
                 if(hpDam->hp <= 0) ecs_add(entA, CID_IsKilled, NULL);
             }
         }
@@ -458,12 +466,14 @@ void System_DrawEnemyHP()
 
 void System_DrawDebugCollisions()
 {
+    Color color = RED;
+    color.a = 127;
+    
     uint32_t i;
     QueryResult *qr = ecs_query(3, CID_Position, CID_DrawShape, CID_HasCollisions);
     for (i = 0; i < qr->count; ++i) {
         PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
         DrawShapeComponent *shape = (DrawShapeComponent*)ecs_get(qr->list[i], CID_DrawShape);
-        Color color = RED;
         
         Shapes_Draw(pos, &shape->shape, color);
     }
@@ -507,7 +517,7 @@ void Systems_GameLoop()
     System_EvaluateAiAttack();
     System_PlayerInput();
     System_PerformAttack();
-    System_DealDamageNew();
+    System_DealDamageNew(delta);
     System_EnemyWanderer(delta);
     System_KeepWandererInBounds();
     System_SpawnRandomUnit(delta);
@@ -560,6 +570,8 @@ int main ()
         (Vector2) { 32, 32 },
         0
     );
+    
+    Spawn_Teleporter((Vector2) { g_screenSettings.width - 32, g_screenSettings.height - 32 } );
     
     //SpawnEntireFieldOfEnemies();
 

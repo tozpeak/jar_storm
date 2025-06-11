@@ -180,6 +180,7 @@ void InitLayers()
     IntersectLayers(LN_ENEMY, LN_PL_BULLET);
     IntersectLayers(LN_WALL, LN_PL_BULLET);
     IntersectLayers(LN_WALL, LN_EN_BULLET);
+    IntersectLayers(LN_PLAYER, LN_PL_TRIGGER);
 }
 
 void InitCollisionWorldState()

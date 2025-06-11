@@ -7,11 +7,12 @@
 #include <physics.h>
 #include <attacks.h>
 
-typedef char DamageTarget;
-enum DamageTargetOptions
+typedef char DamageFlags;
+enum DamageFlagOptions
 {
-    DMG_SELF = 1 << 0,
-    DMG_OTHER = 1 << 1,
+    DMG_TARGET_SELF = 1 << 0,
+    DMG_TARGET_OTHER = 1 << 1,
+    DMG_ON_TICK = 1 << 2,
 };
 
 typedef Vector2 PositionComponent;
@@ -26,7 +27,7 @@ typedef struct
 {
     short damage;
     //Layer damageMask;
-    DamageTarget target;
+    DamageFlags flags;
 } DealDamageComponent;
 
 typedef AttackAbility PrimaryAttackComponent;

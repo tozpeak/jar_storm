@@ -8,7 +8,7 @@ C99 was chosen as an old standard, which is still in use. To better understand t
 
 ## Generic
 
-- [ ] Systems on fixed timers
+- [x] Systems on fixed timers
 
 - [ ] Level layout
 - [ ] Progression
@@ -36,6 +36,8 @@ C99 was chosen as an old standard, which is still in use. To better understand t
 
 - [ ] make access for flag components to use entity_store.flag_array (too free some space in bitmask for actual data-containing components)
 - [ ] make more complex queries, for example with option to exclude components
+
+---
 
 # Backlog
 

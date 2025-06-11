@@ -28,7 +28,7 @@ void Spawn_Melee(Vector2 aimDirection)
         shape, 
         (Layer)LN_EN_BULLET 
     };
-    DealDamageComponent dam = { 24, DMG_SELF | DMG_OTHER };
+    DealDamageComponent dam = { 24, DMG_TARGET_SELF | DMG_TARGET_OTHER };
     HealthComponent hp = { 1, 1 };
     
     ecs_add(e.id, CID_Position, &pos );
@@ -52,7 +52,7 @@ void Spawn_Fireball(Vector2 aimFrom, Vector2 aimDirection, float speed)
         Shapes_NewCircle(Vector2Zero(), radius), 
         (Layer)LN_EN_BULLET 
     };
-    DealDamageComponent dam = { 36, DMG_SELF | DMG_OTHER };
+    DealDamageComponent dam = { 36, DMG_TARGET_SELF | DMG_TARGET_OTHER };
     HealthComponent hp = { 1, 1 };
     
     ecs_add(e.id, CID_Position, &pos );
@@ -82,7 +82,7 @@ void Spawn_Bullet(Vector2 aimFrom, Vector2 aimDirection, float speed)
         shape, 
         (Layer)LN_PL_BULLET 
     };
-    DealDamageComponent dam = { 4, DMG_SELF | DMG_OTHER };
+    DealDamageComponent dam = { 4, DMG_TARGET_SELF | DMG_TARGET_OTHER };
     HealthComponent hp = { 1, 1 };
     
     ecs_add(e.id, CID_Position, &pos );
@@ -106,7 +106,7 @@ void Spawn_BigBullet(Vector2 aimFrom, Vector2 aimDirection, float speed)
         Shapes_NewCircle(Vector2Zero(), radius), 
         (Layer)LN_PL_BULLET 
     };
-    DealDamageComponent dam = { 4, DMG_SELF | DMG_OTHER };
+    DealDamageComponent dam = { 4, DMG_TARGET_SELF | DMG_TARGET_OTHER };
     HealthComponent hp = { 36, 36 };
     
     ecs_add(e.id, CID_Position, &pos );
@@ -116,6 +116,32 @@ void Spawn_BigBullet(Vector2 aimFrom, Vector2 aimDirection, float speed)
     ecs_add(e.id, CID_DealDamage, &dam );
     ecs_add(e.id, CID_Health, &hp );
     //ecs_add(e.id, CID_HasHpBar, NULL );
+}
+
+
+uint32_t Spawn_Teleporter(Vector2 position) 
+{
+    float radius = 6.0f;
+    float triggerRadius = 16 * 12;
+    Entity e = ecs_create();
+    PositionComponent pos = position;
+    
+    DrawShapeComponent shape = { RED, Shapes_NewCircle(Vector2Zero(), radius) };
+    ColliderComponent col = { 
+        Shapes_NewCircle(Vector2Zero(), triggerRadius), 
+        (Layer)LN_PL_TRIGGER
+    };
+    HealthComponent hp = { 100, 100 };
+    DealDamageComponent dam = { 1, DMG_TARGET_SELF | DMG_ON_TICK };
+    
+    ecs_add(e.id, CID_Position, &pos );
+    ecs_add(e.id, CID_DrawShape, &shape );
+    ecs_add(e.id, CID_Collider, &col );
+    ecs_add(e.id, CID_Health, &hp );
+    ecs_add(e.id, CID_DealDamage, &dam );
+    ecs_add(e.id, CID_HasHpBar, NULL );
+    
+    return e.id;
 }
 
 uint32_t Spawn_Enemy(Vector2 position) 

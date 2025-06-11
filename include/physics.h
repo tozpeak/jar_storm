@@ -12,6 +12,7 @@ enum LayerName
     LN_WALL = 2,
     LN_PL_BULLET = 3,
     LN_EN_BULLET = 4,
+    LN_PL_TRIGGER = 5,
     
     LN_COUNT,
 };
