@@ -6,12 +6,42 @@ C99 was chosen as an old standard, which is still in use. To better understand t
 
 # TODO
 
-- [-] Collision system to store collision data:
-    - [x] other collision entity
-    - [ ] collision point
-    - [ ] collision depth
-    - [ ] collision normal
+## Generic
 
+- [ ] Systems on fixed timers
+
+- [ ] Level layout
+- [ ] Progression
+- [ ] Core abilities
+- [ ] Items
+- [ ] Chests
+
+- [ ] Enemy behaviour:
+    - [ ] make structure for flow field calculation,
+    - [ ] make components for more interesting enemy behaviour:
+        - [x] attack abilities,
+        - [ ] targeted movement,
+    - [ ] FSM or behaviour trees
+
+- [ ] Refactor attacks and spawners to make more generic code
+
+## Physics
+
+- [ ] collision point
+- [ ] collision depth
+- [ ] collision normal
+- [ ] rigidbody system
+
+## ECS
+
+- [ ] make access for flag components to use entity_store.flag_array (too free some space in bitmask for actual data-containing components)
+- [ ] make more complex queries, for example with option to exclude components
+
+# Backlog
+
+## Generic
+
+- [x] Split the main.c
 - [x] Bullets have health
 - [x] DealDamageOnCollision component:
     - target: self, other, both
@@ -20,27 +50,17 @@ C99 was chosen as an old standard, which is still in use. To better understand t
 - [x] Move player to ECS
 - [x] Move input to ECS
 
-- [ ] Level layout
-- [ ] Progression
-- [ ] Core abilities
-- [ ] Items
-- [ ] Chests
-
 - [x] Melee attacks
 - [x] Implement raycast (for alternative bullets)
-- [ ] Enemy behaviour:
-    - [ ] make structure for flow field calculation,
-    - [ ] make components for more interesting enemy behaviour:
-        - [x] attack abilities,
-        - [ ] targeted movement,
-    - [ ] FSM or behaviour trees
 
-- [x] Split the main.c
-- [ ] Refactor attacks and spawners to make more generic code
-- [ ] Extend ECS
-    - [ ] make access for flag components to use entity_store.flag_array (too free some space in bitmask for actual data-containing components)
-    - [ ] make more complex queries, for example with option to exclude components
-    - [x] make a way to have several query buffers for systems that benefit from cross-comparing entity sets (this may speed up enumerating only valid pairs)
+## Physics
+
+- [x] Collision system to store collision data:
+    - other collision entity
+
+## ECS
+
+- [x] make a way to have several query buffers for systems that benefit from cross-comparing entity sets (this may speed up enumerating only valid pairs)
 
 # Known Issues
 
