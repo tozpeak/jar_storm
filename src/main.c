@@ -15,6 +15,9 @@ typedef struct
 {
     int width;
     int height;
+    Vector2 tileSize;
+    int marginTiles;
+    int marginTopTiles;
     Camera2D *camera;
 } ScreenSettings;
 
@@ -22,18 +25,31 @@ Camera2D mainCamera = { 0 };
 const ScreenSettings g_screenSettings = { 
     .width = 640, 
     .height = 480,
+    .tileSize = { 16, 16 },
+    .marginTiles = 1,
+    .marginTopTiles = 2,
     .camera = &mainCamera,
  };
 
 void DrawChessboard() 
 {
     int screenX = g_screenSettings.width, screenY = g_screenSettings.height;
-    Vector2 tileSize = { 16, 12 };
-    int offsetTiles = 1;
+    Vector2 tileSize = g_screenSettings.tileSize;
+    int offsetTiles = g_screenSettings.marginTiles;
+    int offsetTopTiles = g_screenSettings.marginTopTiles;
     Color tileColor = DARKGRAY;
+    
+    DrawRectangle(
+        offsetTiles * tileSize.x,
+        offsetTopTiles * tileSize.y,
+        screenX - ( offsetTiles * 2 ) * tileSize.x,
+        screenY - ( offsetTiles + offsetTopTiles ) * tileSize.y,
+        GRAY
+    );
+    
     for (int i = offsetTiles; (i + offsetTiles) * tileSize.x < screenX; i++) 
     {
-        for (int j = 2 + offsetTiles + (i % 2); (j + offsetTiles) * tileSize.y < screenY; j += 2) 
+        for (int j = offsetTopTiles + (i % 2); (j + offsetTiles) * tileSize.y < screenY; j += 2) 
         {
             DrawRectangle(
                 i * tileSize.x,
@@ -120,12 +136,13 @@ void System_DealDamageNew()
 
 void System_KeepWandererInBounds()
 {
+    Vector2 tileSize = g_screenSettings.tileSize;
     
     Rectangle levelBounds = {
-        16,
-        3 * 12,
-        g_screenSettings.width - 16 * 2,
-        g_screenSettings.height - 12 * 4,
+        tileSize.x * g_screenSettings.marginTiles,
+        tileSize.y * g_screenSettings.marginTopTiles,
+        g_screenSettings.width - tileSize.x * (g_screenSettings.marginTiles * 2),
+        g_screenSettings.height - tileSize.y * (g_screenSettings.marginTiles + g_screenSettings.marginTopTiles),
     };
     Vector2 levelCenter = {
         g_screenSettings.width / 2,
