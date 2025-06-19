@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdio.h>
+#include <stdint.h>
 #include <raylib.h>
 #include <raymath.h>
 
@@ -35,6 +36,23 @@ typedef AttackAbility SecondaryAttackComponent;
 
 typedef char PlayerIdComponent;
 
+typedef uint32_t ParentIdComponent;
+
+typedef struct
+{
+    float velocity;
+    float attackSpeedMult;
+    float dmgMult;
+} StatsComponent;
+
+typedef char ItemType;
+
+typedef struct
+{
+    char count;
+    ItemType type;
+} ItemComponent;
+
 typedef int StateFlagsComponent;
 
 enum ComponentId
@@ -53,6 +71,10 @@ enum ComponentId
     CID_AttackIntention, //defined in attacks.h
     CID_PlayerId,
     
+    CID_ParentId,
+    CID_Stats,
+    CID_Item,
+    
     CID_StateFlags,
     
     CID_HasHpBar,
@@ -60,6 +82,7 @@ enum ComponentId
     CID_IsWanderer,
     CID_AiAttack,
     CID_PlayerInput,
+    CID_InventoryIsDirty,
     
     CID_Count
 };

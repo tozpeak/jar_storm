@@ -22,6 +22,10 @@ void InitComponents()
         sizeof(AttackIntentionComponent),
         sizeof(PlayerIdComponent),
         
+        sizeof(ParentIdComponent),
+        sizeof(StatsComponent),
+        sizeof(ItemComponent),
+        
         sizeof(StateFlagsComponent),
         
         0, //CID_HasHpBar
@@ -29,6 +33,7 @@ void InitComponents()
         0, //CID_IsWanderer
         0, //CID_AiAttack
         0, //CID_PlayerInput
+        0, //CID_InventoryIsDirty
         
         0 //CID_Count
     );

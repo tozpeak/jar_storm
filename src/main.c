@@ -386,6 +386,112 @@ void System_SpawnRandomUnit(float deltaTime)
         Spawn_Enemy(position);
 }
 
+void System_PickItem()
+{
+    uint32_t i;
+    QueryResult *qr = ecs_query(2, CID_Item, CID_HasCollisions);
+    
+    int itemsUpdatedCount = 0;
+    uint32_t firstEntity = 0;
+    for (i = 0; i < qr->count; ++i) {
+        
+        uint32_t entItem = qr->list[i];
+        
+        if ( ecs_has(entItem, CID_ParentId) ) continue;
+        
+        CollisionIterator iterator = { 0 };
+        InitCollisionIterator(&iterator, entItem);
+        while (TryGetNextCollision(&iterator)) {
+            uint32_t entPlayer = iterator.other;
+            CollisionData* cData = iterator.collisionData;
+            
+            if( !ecs_has(entPlayer, CID_PlayerId) ) continue;
+            
+            if(itemsUpdatedCount == 0) firstEntity = entItem;
+            itemsUpdatedCount++;
+            ecs_add(entItem, CID_ParentId, &entPlayer);
+            ecs_remove(entItem, CID_Position);
+            ecs_add(entPlayer, CID_InventoryIsDirty, NULL);
+            
+            break;
+        }
+    }
+    
+    //compress items in "stacks"
+    //optimization: no need to make complex enumerations if zero items were picked
+    if (itemsUpdatedCount < 1) return;
+    
+    qr = ecs_query(2, CID_Item, CID_ParentId);
+    
+    int j;
+    i = 0;
+    //skip regular items
+    while(qr->list[i] < firstEntity) { i++; }
+    
+    for (; i < qr->count; ++i) {
+        uint32_t entItemA = qr->list[i];
+        
+        if( ecs_has(entItemA, CID_IsKilled) ) continue;
+        
+        ItemComponent *itemA = (ItemComponent*)ecs_get(entItemA, CID_Item);
+        
+        for (j = 0; j < qr->count; ++j) {
+            uint32_t entItemB = qr->list[j];
+            if(entItemB == entItemA) continue;
+            if( ecs_has(entItemB, CID_IsKilled) ) continue;
+            
+            ItemComponent *itemB = (ItemComponent*)ecs_get(entItemB, CID_Item);
+            if (itemA->type != itemB->type) continue;
+            
+            if(
+                (*(ParentIdComponent*)ecs_get(entItemA, CID_ParentId)) 
+                != (*(ParentIdComponent*)ecs_get(entItemB, CID_ParentId))
+            ) continue;
+            
+            //different item entities, same item type, same parent
+            //compress: add item counts into the first, kill the other
+            itemB->count += itemA->count;
+            itemA->count = 0;
+            ecs_add(entItemA, CID_IsKilled, NULL);
+            break;
+        }
+    }
+}
+
+void System_UpdateDirtyInventory()
+{
+    uint32_t i;
+    QueryResult *qr = NULL;
+    
+    uint32_t entInventory;
+    QueryResult dirtyQr = { .list = &entInventory, .cap = 1 };
+    
+    while (true) {
+        ecs_query_ex(&dirtyQr, 1, CID_InventoryIsDirty);
+        if(dirtyQr.count < 1) break;
+        
+        if(qr == NULL) { //making request once since we can't filter the items other than enumerating
+            qr = ecs_query(2, CID_Item, CID_ParentId);
+        }
+        
+        //TODO: set basic stats
+        for(i = 0; i < qr->count; ++i) {
+            uint32_t entItem = qr->list[i];
+            
+            if (
+                (*(ParentIdComponent*)ecs_get(entItem, CID_ParentId))
+                != entInventory
+            ) continue;
+            
+            ItemComponent *item = (ItemComponent*)ecs_get(entItem, CID_Item);
+            //TODO: apply stat modificators from item here
+            //      scaling value by item->count
+        }
+        
+        ecs_remove(entInventory, CID_InventoryIsDirty);
+    }
+}
+
 void System_SaveKilledPlayer()
 {
     uint32_t i;
@@ -465,6 +571,32 @@ void System_DrawEnemyHP()
     }
 }
 
+void System_DrawHUD_Items()
+{
+    QueryResult *qr = ecs_query(1, CID_PlayerId);
+    uint32_t entPlayer = qr->list[0];
+    
+    uint32_t i;
+    uint32_t j = 0;
+    qr = ecs_query(2, CID_Item, CID_ParentId);
+    for (i = 0; i < qr->count; ++i) {
+        uint32_t entItem = qr->list[i];
+        
+        ParentIdComponent *parent = (ParentIdComponent*) ecs_get(entItem, CID_ParentId);
+        
+        if (*parent != entPlayer) continue;
+        
+        ItemComponent *item = (ItemComponent*) ecs_get(entItem, CID_Item);
+        
+        DrawText(
+            TextFormat("%d:%d", item->type, item->count),
+            128 + 64 * ( j++ ),
+            8,
+            16, DARKGREEN
+        );
+    }
+}
+
 void System_DrawDebugCollisions()
 {
     Color color = RED;
@@ -523,6 +655,9 @@ void Systems_GameLoop()
     System_KeepWandererInBounds();
     System_SpawnRandomUnit(delta);
     
+    System_PickItem();
+    System_UpdateDirtyInventory();
+    
     System_KillOutOfBounds();
     System_SaveKilledPlayer();
     System_DestroyKilled();
@@ -534,6 +669,8 @@ void Systems_DrawLoop()
     
     System_Draw();
     System_DrawPlayer();
+    
+    System_DrawHUD_Items();
 
     System_DrawDebugCollisions();
 
@@ -554,12 +691,19 @@ void GenerateLevel()
     };
 
     Spawn_Teleporter((Vector2) { screenX - 32, screenY - 32 } );
+    //Spawn_RandomItem((Vector2) { 256, 256 } );
     
     for (int i = 0; i < pillarCount; i++) {
         Spawn_Pillar( (Vector2) {
             rand() % (int)round(levelRect.width) + levelRect.x,
             rand() % (int)round(levelRect.height) + levelRect.y,
         } );
+    }
+    
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            Spawn_RandomItem((Vector2) { 64 * (i+1), 64 * (j+1) } );
+        }
     }
 }
 

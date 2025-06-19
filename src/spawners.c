@@ -261,3 +261,28 @@ Entity Spawn_Player(Vector2 position, char id)
     
     return e;
 } 
+
+uint32_t Spawn_RandomItem(Vector2 position)
+{
+    float radius = 3.0f;
+    Entity e = ecs_create();
+    PositionComponent pos = position;
+    Shape shape = Shapes_NewCircle(Vector2Zero(), radius);
+    DrawShapeComponent draw = { LIME, shape };
+    ColliderComponent col = { 
+        shape,
+        (Layer)LN_EN_BULLET
+    };
+    
+    ItemComponent item = { 
+        .count = 1,
+        .type = rand() % 4
+    };
+    
+    ecs_add(e.id, CID_Position, &pos );
+    ecs_add(e.id, CID_DrawShape, &draw );
+    ecs_add(e.id, CID_Collider, &col );
+    ecs_add(e.id, CID_Item, &item );
+    
+    return e.id;
+}
