@@ -10,20 +10,53 @@ C99 was chosen as an old standard, which is still in use. To better understand t
 
 - [x] Systems on fixed timers
 
-- [ ] Level layout
-- [ ] Progression
-- [ ] Core abilities
-- [ ] Items
-- [ ] Chests
-
-- [ ] Enemy behaviour:
-    - [ ] make structure for flow field calculation,
-    - [ ] make components for more interesting enemy behaviour:
-        - [x] attack abilities,
-        - [ ] targeted movement,
-    - [ ] FSM or behaviour trees
+- [ ] Core abilities:
+    - [x] attacks
+    - [ ] additional attacks and movement
 
 - [ ] Refactor attacks and spawners to make more generic code
+
+## UI
+
+- [ ] player hp
+- [ ] cooldowns (abilities)
+- [ ] items list
+- [ ] damage numeric particles
+
+## Item System
+
+- [ ] items (collect on collision)
+- [ ] ? item effects ? (define how it works)
+- [ ] interactible objects
+- [ ] chests
+- [ ] coins on kill
+
+## Enemy Behaviour
+
+- [ ] make structure for flow field calculation,
+- [ ] make components for more interesting enemy behaviour:
+    - [x] attack abilities,
+    - [ ] targeted movement,
+- [ ] FSM or behaviour trees
+
+## Levels & Progression
+
+- [ ] ? where from ? (make decision):
+    - [ ] premade files
+    - [ ] generated on the go
+- [ ] ? limited view ? (make decision):
+    - [ ] fog of war
+    - [ ] level bigger than viewport with moving camera
+    - [ ] segmented level, like rooms in Binding of Isaac
+- [ ] teleporters to the next stage
+- [ ] boss enemies
+- [ ] pits + jump/fly systems
+
+## Main Menu
+
+- [ ] select character
+- [ ] ? select input method
+- [ ] ? highscores
 
 ## Physics
 
