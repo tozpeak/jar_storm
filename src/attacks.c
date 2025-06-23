@@ -14,6 +14,7 @@ void Perform_ShotPistols(AttackContext *context)
     Vector2 aimFrom = Vector2Add (*playerPos, aimFromOffset);
     
     float bulletSpeed = 16 * 128;
+    //TODO: apply dmgMult
     Spawn_Bullet(aimFrom, context->intention->aimAt, bulletSpeed);
 }
 
@@ -24,6 +25,7 @@ void Perform_EnergyBlast(AttackContext *context)
     Vector2 aimFrom = Vector2Add (*playerPos, aimFromOffset);
     
     float bulletSpeed = 16 * 16;
+    //TODO: apply dmgMult
     Spawn_BigBullet(aimFrom, context->intention->aimAt, bulletSpeed);
 }
 
@@ -126,7 +128,13 @@ void Attack_Perform(AttackContext *context)
     AttackConfig *config = Attack_GetConfigFor(context->ability->attackId);
     config->performStrategy(context);
     context->ability->state = ATK_ST_COOLDOWN;
-    context->ability->cooldown = config->cooldownTime;
+    
+    float cooldownTime = config->cooldownTime;
+    if ( ecs_has(context->entityId, CID_Stats) ) {
+        StatsComponent *stats = (StatsComponent*) ecs_get(context->entityId, CID_Stats);
+        cooldownTime = cooldownTime / stats->attackSpeedMult;
+    }
+    context->ability->cooldown = cooldownTime;
 }
 
 void Attack_EvaluateAi(AttackContext *context)

@@ -248,6 +248,12 @@ Entity Spawn_Player(Vector2 position, char id)
     PrimaryAttackComponent primAtt = { .attackId = ATK_ID_SHOT_PISTOLS };
     SecondaryAttackComponent secAtt = { .attackId = ATK_ID_SHOT_ENERGY_BLAST };
     
+    StatsComponent baseStats = {
+        .velocity = 16 * 4,
+        .attackSpeedMult = 1,
+        .dmgMult = 1,
+    };
+    
     ecs_add(e.id, CID_Position, &pos );
     ecs_add(e.id, CID_Velocity, &vel );
     ecs_add(e.id, CID_DrawShape, &shape );
@@ -256,8 +262,14 @@ Entity Spawn_Player(Vector2 position, char id)
     ecs_add(e.id, CID_PrimaryAttack, &primAtt );
     ecs_add(e.id, CID_SecondaryAttack, &secAtt );
     ecs_add(e.id, CID_PlayerId, &id );
+    ecs_add(e.id, CID_Stats, &baseStats );
     ecs_add(e.id, CID_HasHpBar, NULL );
     ecs_add(e.id, CID_PlayerInput, NULL );
+    
+    Entity parent = ecs_create();
+    ecs_add(parent.id, CID_Stats, &baseStats);
+    
+    ecs_add(e.id, CID_ParentId, &(parent.id));
     
     return e;
 } 
@@ -276,13 +288,21 @@ uint32_t Spawn_RandomItem(Vector2 position)
     
     ItemComponent item = { 
         .count = 1,
-        .type = rand() % 4
+        .type = rand() % 3
     };
+    
+    StatsComponent stats = { 0 };
+    switch (item.type) {
+        case 0: stats.velocity = 16 * 4 * 0.15f; break;
+        case 1: stats.attackSpeedMult = 0.15f; break;
+        case 2: stats.dmgMult = 0.25f; break;
+    }
     
     ecs_add(e.id, CID_Position, &pos );
     ecs_add(e.id, CID_DrawShape, &draw );
     ecs_add(e.id, CID_Collider, &col );
     ecs_add(e.id, CID_Item, &item );
+    ecs_add(e.id, CID_Stats, &stats );
     
     return e.id;
 }

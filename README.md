@@ -25,8 +25,12 @@ C99 was chosen as an old standard, which is still in use. To better understand t
 
 ## Item System
 
-- [ ] items (collect on collision)
-- [ ] ? item effects ? (define how it works)
+- [x] items (collect on collision)
+- [x] basic item effects:
+    - move speed,
+    - attack speed,
+- [ ] damage multiplier (requires better spawner structure)
+- [ ] more custom item effects
 - [ ] interactible objects
 - [ ] chests
 - [ ] coins on kill

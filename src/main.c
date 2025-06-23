@@ -275,7 +275,6 @@ void System_PlayerInput()
     
     Vector2 aimFromOffset = { 0, -12 }; //{ 0, -playerSize.y / 2 };
     Vector2 aimDirection = { 0, 0 };
-    float playerSpeed = 16 * 4;
     float shotCooldownState = 0;
     float shotCooldown = 0.25f;
     
@@ -295,9 +294,11 @@ void System_PlayerInput()
         if (IsKeyDown(KEY_W)) walkInput.y -= 1;
         if (IsKeyDown(KEY_S)) walkInput.y += 1;
         
+        StatsComponent *stats = (StatsComponent*) ecs_get(playerEntId, CID_Stats);
+        
         walkInput = Vector2Scale(
             Vector2Normalize(walkInput),
-            playerSpeed
+            stats->velocity
         );
         ecs_add(playerEntId, CID_Velocity, &walkInput);
         
@@ -474,7 +475,16 @@ void System_UpdateDirtyInventory()
             qr = ecs_query(2, CID_Item, CID_ParentId);
         }
         
-        //TODO: set basic stats
+        StatsComponent *stats = ecs_get(entInventory, CID_Stats);
+        
+        if ( ecs_has(entInventory, CID_ParentId) ) {
+            ParentIdComponent *entParent = ecs_get(entInventory, CID_ParentId);
+            ecs_add(entInventory, CID_Stats, ecs_get(*entParent, CID_Stats) );
+        }
+        else {
+            *stats = (StatsComponent) { 1, 1, 1 }; //default values
+        }
+        
         for(i = 0; i < qr->count; ++i) {
             uint32_t entItem = qr->list[i];
             
@@ -484,8 +494,14 @@ void System_UpdateDirtyInventory()
             ) continue;
             
             ItemComponent *item = (ItemComponent*)ecs_get(entItem, CID_Item);
-            //TODO: apply stat modificators from item here
-            //      scaling value by item->count
+            
+            if ( ecs_has(entItem, CID_Stats) ) {
+                StatsComponent *itemStats = ecs_get(entItem, CID_Stats);
+                
+                stats->velocity         += itemStats->velocity          * item->count;
+                stats->attackSpeedMult  += itemStats->attackSpeedMult   * item->count;
+                stats->dmgMult          += itemStats->dmgMult           * item->count;
+            }
         }
         
         ecs_remove(entInventory, CID_InventoryIsDirty);
@@ -573,6 +589,12 @@ void System_DrawEnemyHP()
 
 void System_DrawHUD_Items()
 {
+    const char* labels[] = {
+        "MVS",
+        "ATS",
+        "DMG"
+    };
+
     QueryResult *qr = ecs_query(1, CID_PlayerId);
     uint32_t entPlayer = qr->list[0];
     
@@ -589,7 +611,7 @@ void System_DrawHUD_Items()
         ItemComponent *item = (ItemComponent*) ecs_get(entItem, CID_Item);
         
         DrawText(
-            TextFormat("%d:%d", item->type, item->count),
+            TextFormat("%s:%d", labels[item->type], item->count),
             128 + 64 * ( j++ ),
             8,
             16, DARKGREEN
