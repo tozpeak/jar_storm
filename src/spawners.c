@@ -14,6 +14,13 @@ void SetAttackSpawnCooldown(AttackAbility *attack)
 
 Entity Spawn_Projectile(Vector2 projPosition, short dmg, short maxHp, AttackContext *context)
 {
+    if( ecs_has(context->entityId, CID_Stats) ) {
+        StatsComponent *stats = (StatsComponent*) ecs_get(context->entityId, CID_Stats);
+        
+        dmg     = (short) (dmg      * stats->dmgMult);
+        maxHp   = (short) (maxHp    * stats->dmgMult);
+    }
+    
     Entity e = ecs_create();
     
     DealDamageComponent dam = { dmg, DMG_TARGET_SELF | DMG_TARGET_OTHER };
