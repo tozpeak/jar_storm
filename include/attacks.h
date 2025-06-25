@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <raylib.h>
 
 typedef char AttackId;
 enum AttackIdOptions 
@@ -51,6 +52,15 @@ typedef struct
     float aiEvaluation;
 } AttackContext;
 
+typedef struct
+{
+    float radius; // 0 means line shape
+    float velocity; // 0 means no velocity
+    short baseDmg;
+    short hp;
+    Color color;
+} AttackProjectile;
+
 typedef struct 
 {
     //float buildUpTime;
@@ -58,6 +68,8 @@ typedef struct
     float cooldownTime;
     void (* performStrategy)(AttackContext *context);
     float (* aiPriorityStrategy)(AttackContext *context);
+    
+    AttackProjectile projectile;
 } AttackConfig;
 
 void Attack_InitConfig();

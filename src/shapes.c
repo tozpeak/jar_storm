@@ -18,6 +18,7 @@ Shape Shapes_NewCircle(Vector2 offset, float radius)
         .circle = (ShapeCircle) { offset, radius }
     };
 }
+Shape Shapes_NewCircle_0(float radius) { return Shapes_NewCircle( Vector2Zero(), radius ); }
 
 Shape Shapes_NewLine(Vector2 start, Vector2 finish)
 {
@@ -26,6 +27,7 @@ Shape Shapes_NewLine(Vector2 start, Vector2 finish)
         .line = (ShapeLine) { start, finish }
     };
 }
+Shape Shapes_NewLine_0(Vector2 finish) { return Shapes_NewLine( Vector2Zero(), finish ); }
 
 void Shapes_Draw(Vector2 *pos, Shape *shape, Color color) 
 {

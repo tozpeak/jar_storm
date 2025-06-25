@@ -46,6 +46,8 @@ typedef struct
 
 Shape Shapes_NewPixel(Vector2 offset);
 Shape Shapes_NewCircle(Vector2 offset, float radius);
+Shape Shapes_NewCircle_0(float radius);
 Shape Shapes_NewLine(Vector2 start, Vector2 finish);
+Shape Shapes_NewLine_0(Vector2 finish);
 
 void Shapes_Draw(Vector2 *pos, Shape *shape, Color color);

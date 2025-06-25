@@ -14,7 +14,7 @@ C99 was chosen as an old standard, which is still in use. To better understand t
     - [x] attacks
     - [ ] additional attacks and movement
 
-- [ ] Refactor attacks and spawners to make more generic code
+- [x] Refactor attacks and spawners to make more generic code
 
 ## UI
 
@@ -29,7 +29,7 @@ C99 was chosen as an old standard, which is still in use. To better understand t
 - [x] basic item effects:
     - move speed,
     - attack speed,
-- [ ] damage multiplier (requires better spawner structure)
+- [x] damage multiplier (requires better spawner structure)
 - [ ] more custom item effects
 - [ ] interactible objects
 - [ ] chests

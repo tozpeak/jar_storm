@@ -12,111 +12,83 @@ void SetAttackSpawnCooldown(AttackAbility *attack)
     attack->cooldown = 5;
 }
 
-void Spawn_Melee(Vector2 aimDirection)
+Entity Spawn_Projectile(Vector2 projPosition, short dmg, short maxHp, AttackContext *context)
 {
-    float radius = 6.0f;
     Entity e = ecs_create();
-    PositionComponent pos = aimDirection;
-    Shape shape = Shapes_NewCircle(
-        Vector2Zero(),
-        radius
-    );
+    
+    DealDamageComponent dam = { dmg, DMG_TARGET_SELF | DMG_TARGET_OTHER };
+    HealthComponent hp = { maxHp, maxHp };
+    
+    ecs_add(e.id, CID_Position, &projPosition);
+    ecs_add(e.id, CID_DealDamage, &dam );
+    ecs_add(e.id, CID_Health, &hp );
+    
+    return e;
+}
+
+void Spawn_AddVelocity(Entity e, float linearVelocity, Vector2 aimDirection)
+{
+    VelocityComponent vel = Vector2Scale(aimDirection, linearVelocity);
+    ecs_add(e.id, CID_Velocity, &vel );
+}
+
+void Spawn_AddShape(Entity e, Shape shape, Color color, Layer layer)
+{
     DrawShapeComponent draw = { 
-        ORANGE, shape
+        color, shape
     };
     ColliderComponent col = { 
         shape, 
-        (Layer)LN_EN_BULLET 
+        layer
     };
-    DealDamageComponent dam = { 24, DMG_TARGET_SELF | DMG_TARGET_OTHER };
-    HealthComponent hp = { 1, 1 };
     
-    ecs_add(e.id, CID_Position, &pos );
     ecs_add(e.id, CID_DrawShape, &draw );
     ecs_add(e.id, CID_Collider, &col );
-    ecs_add(e.id, CID_DealDamage, &dam );
-    ecs_add(e.id, CID_Health, &hp );
 }
 
-
-void Spawn_Fireball(Vector2 aimFrom, Vector2 aimDirection, float speed) 
+void Spawn_AddShapeBullet(Entity e, Color color, Layer layer)
 {
-    float radius = 6.0f;
-    Vector2 velocity = Vector2Scale(aimDirection, speed);
-    
-    Entity e = ecs_create();
-    PositionComponent pos = aimFrom;
-    VelocityComponent vel = velocity;
-    DrawShapeComponent shape = { ORANGE, Shapes_NewCircle(Vector2Zero(), radius) };
-    ColliderComponent col = { 
-        Shapes_NewCircle(Vector2Zero(), radius), 
-        (Layer)LN_EN_BULLET 
-    };
-    DealDamageComponent dam = { 36, DMG_TARGET_SELF | DMG_TARGET_OTHER };
-    HealthComponent hp = { 1, 1 };
-    
-    ecs_add(e.id, CID_Position, &pos );
-    ecs_add(e.id, CID_Velocity, &vel );
-    ecs_add(e.id, CID_DrawShape, &shape );
-    ecs_add(e.id, CID_Collider, &col );
-    ecs_add(e.id, CID_DealDamage, &dam );
-    ecs_add(e.id, CID_Health, &hp );
-    //ecs_add(e.id, CID_HasHpBar, NULL );
-}
-
-void Spawn_Bullet(Vector2 aimFrom, Vector2 aimDirection, float speed) 
-{
-    Vector2 velocity = Vector2Scale(aimDirection, speed);
-    
-    Entity e = ecs_create();
-    PositionComponent pos = aimFrom;
-    VelocityComponent vel = velocity;
-    Shape shape = Shapes_NewLine(
-        Vector2Zero(),
-        Vector2Scale( velocity, 0.02f )
+    VelocityComponent *velocity = (VelocityComponent*) ecs_get(e.id, CID_Velocity);
+    Shape shape = Shapes_NewLine_0(
+        Vector2Scale( *velocity, 0.02f )
     );
-    DrawShapeComponent draw = { 
-        YELLOW, shape
-    };
-    ColliderComponent col = { 
-        shape, 
-        (Layer)LN_PL_BULLET 
-    };
-    DealDamageComponent dam = { 4, DMG_TARGET_SELF | DMG_TARGET_OTHER };
-    HealthComponent hp = { 1, 1 };
-    
-    ecs_add(e.id, CID_Position, &pos );
-    ecs_add(e.id, CID_Velocity, &vel );
-    ecs_add(e.id, CID_DrawShape, &draw );
-    ecs_add(e.id, CID_Collider, &col );
-    ecs_add(e.id, CID_DealDamage, &dam );
-    ecs_add(e.id, CID_Health, &hp );
+    Spawn_AddShape( e, shape, color, layer );
 }
 
-void Spawn_BigBullet(Vector2 aimFrom, Vector2 aimDirection, float speed) 
-{
-    float radius = 10.0f;
-    Vector2 velocity = Vector2Scale(aimDirection, speed);
+Entity Spawn_BuildGenericProjectile(
+    Vector2 projPosition, 
+    Vector2 projDirection, 
+    Layer layer, 
+    AttackContext *context
+) {
+    AttackProjectile *config = &( 
+        Attack_GetConfigFor(context->ability->attackId)->projectile
+    );
     
-    Entity e = ecs_create();
-    PositionComponent pos = aimFrom;
-    VelocityComponent vel = velocity;
-    DrawShapeComponent shape = { SKYBLUE, Shapes_NewCircle(Vector2Zero(), radius) };
-    ColliderComponent col = { 
-        Shapes_NewCircle(Vector2Zero(), radius), 
-        (Layer)LN_PL_BULLET 
-    };
-    DealDamageComponent dam = { 4, DMG_TARGET_SELF | DMG_TARGET_OTHER };
-    HealthComponent hp = { 36, 36 };
+    AttackProjectile pConfig = *config;
+
+    Entity e = Spawn_Projectile(
+        projPosition,
+        config->baseDmg, 
+        config->hp, 
+        context
+    );
     
-    ecs_add(e.id, CID_Position, &pos );
-    ecs_add(e.id, CID_Velocity, &vel );
-    ecs_add(e.id, CID_DrawShape, &shape );
-    ecs_add(e.id, CID_Collider, &col );
-    ecs_add(e.id, CID_DealDamage, &dam );
-    ecs_add(e.id, CID_Health, &hp );
-    //ecs_add(e.id, CID_HasHpBar, NULL );
+    if(config->velocity > 0) Spawn_AddVelocity(e, config->velocity, projDirection);
+    
+    if(config->radius > 0) {
+        Spawn_AddShape(
+            e, 
+            Shapes_NewCircle_0(config->radius),
+            config->color, 
+            layer
+        );
+    }
+    else Spawn_AddShapeBullet(e, config->color, layer);
+    
+    return e;
 }
+
 
 uint32_t Spawn_Pillar(Vector2 position)
 {

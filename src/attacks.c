@@ -7,33 +7,55 @@
 
 AttackConfig configArr[ATK_ID_COUNT] = { 0 };
 
-void Perform_ShotPistols(AttackContext *context)
+Layer GetBulletLayer(AttackContext *context)
 {
-    Vector2 aimFromOffset = { 0, -12 }; //{ 0, -playerSize.y / 2 };
-    PositionComponent* playerPos = (PositionComponent*)ecs_get(context->entityId, CID_Position);
-    Vector2 aimFrom = Vector2Add (*playerPos, aimFromOffset);
+    ColliderComponent* col = (ColliderComponent*)ecs_get(context->entityId, CID_Collider);
     
-    float bulletSpeed = 16 * 128;
-    //TODO: apply dmgMult
-    Spawn_Bullet(aimFrom, context->intention->aimAt, bulletSpeed);
+    enum LayerName result;
+    switch (col->layer)
+    {
+    case LN_PLAYER:
+        result = LN_PL_BULLET;
+        break;
+    default:
+        result = LN_EN_BULLET;
+        break;
+    }
+    return (Layer) result;
 }
 
-void Perform_EnergyBlast(AttackContext *context)
+void Perform_MeleeGeneric(AttackContext *context)
 {
-    Vector2 aimFromOffset = { 0, -12 }; //{ 0, -playerSize.y / 2 };
-    PositionComponent* playerPos = (PositionComponent*)ecs_get(context->entityId, CID_Position);
-    Vector2 aimFrom = Vector2Add (*playerPos, aimFromOffset);
-    
-    float bulletSpeed = 16 * 16;
-    //TODO: apply dmgMult
-    Spawn_BigBullet(aimFrom, context->intention->aimAt, bulletSpeed);
+    Spawn_BuildGenericProjectile(
+        context->intention->aimAt,
+        Vector2Zero(),
+        GetBulletLayer(context),
+        context
+    );
 }
-
-void Perform_ShotFireball(AttackContext *context)
+void Perform_ShotGeneric(AttackContext *context)
 {
-    float bulletSpeed = 16 * 12;
     PositionComponent* shooterPos = (PositionComponent*)ecs_get(context->entityId, CID_Position);
-    Spawn_Fireball(*shooterPos, context->intention->aimAt, bulletSpeed);
+    Spawn_BuildGenericProjectile(
+        *shooterPos,
+        context->intention->aimAt,
+        GetBulletLayer(context),
+        context
+    );
+}
+void Perform_ShotPlayerGeneric(AttackContext *context)
+{
+    //TODO: config aim offset somewhere else, make it more generic and not hardcoded to player
+    Vector2 aimFromOffset = { 0, -12 }; //{ 0, -playerSize.y / 2 };
+    PositionComponent* playerPos = (PositionComponent*)ecs_get(context->entityId, CID_Position);
+    Vector2 aimFrom = Vector2Add (*playerPos, aimFromOffset);
+    
+    Spawn_BuildGenericProjectile(
+        aimFrom,
+        context->intention->aimAt,
+        GetBulletLayer(context),
+        context
+    );
 }
 
 float AiPriority_ShotFireball(AttackContext *context)
@@ -58,11 +80,6 @@ float AiPriority_ShotFireball(AttackContext *context)
         Vector2Subtract(*playerPos, *enemyPos)
     );
     return 50;
-}
-
-void Perform_MeleeBite(AttackContext *context)
-{
-    Spawn_Melee(context->intention->aimAt);
 }
 
 float AiPriority_MeleeBite(AttackContext *context)
@@ -92,29 +109,59 @@ float AiPriority_MeleeBite(AttackContext *context)
 
 void Attack_InitConfig()
 {
+    AttackProjectile genericMeleeProjectile = {
+        .radius = 6.0f,
+        .baseDmg = 24,
+        .hp = 1,
+        .color = ORANGE,
+    };
+    
     configArr[ATK_ID_SHOT_PISTOLS] = (AttackConfig){
         .cooldownTime = 0.25f,
-        .performStrategy = Perform_ShotPistols,
+        .performStrategy = Perform_ShotPlayerGeneric,
+        .projectile = {
+            .radius = 0,
+            .velocity = 16 * 128,
+            .baseDmg = 4,
+            .hp = 1,
+            .color = YELLOW,
+        },
     };
     configArr[ATK_ID_SHOT_ENERGY_BLAST] = (AttackConfig){
         .cooldownTime = 5.0f,
-        .performStrategy = Perform_EnergyBlast,
+        .performStrategy = Perform_ShotPlayerGeneric,
+        .projectile = {
+            .radius = 10.0f,
+            .velocity = 16 * 16,
+            .baseDmg = 4,
+            .hp = 36,
+            .color = SKYBLUE,
+        },
     };
 
     configArr[ATK_ID_SHOT_FIREBALL] = (AttackConfig){
         .cooldownTime = 8.0f,
-        .performStrategy = Perform_ShotFireball,
+        .performStrategy = Perform_ShotGeneric,
         .aiPriorityStrategy = AiPriority_ShotFireball,
+        .projectile = {
+            .radius = 6.0f,
+            .velocity = 16 * 12,
+            .baseDmg = 36,
+            .hp = 1,
+            .color = ORANGE,
+        },
     };
     configArr[ATK_ID_MELEE_BITE] = (AttackConfig){
         .cooldownTime = 3.0f,
-        .performStrategy = Perform_MeleeBite,
+        .performStrategy = Perform_MeleeGeneric,
         .aiPriorityStrategy = AiPriority_MeleeBite,
+        .projectile = genericMeleeProjectile,
     };
     configArr[ATK_ID_MELEE_CLAW] = (AttackConfig){
         .cooldownTime = 3.0f,
-        .performStrategy = Perform_MeleeBite,
+        .performStrategy = Perform_MeleeGeneric,
         .aiPriorityStrategy = AiPriority_MeleeBite,
+        .projectile = genericMeleeProjectile,
     };
 }
 
