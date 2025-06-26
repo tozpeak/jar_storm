@@ -12,7 +12,7 @@ typedef struct
     Entity interactable;
 } InteractionContext;
 
-bool TryGetInteractableForPlayer(Entity player, Entity *interactible)
+bool TryGetInteractableForPlayer(Entity player, Entity *interactable)
 {
     if ( !ecs_has(player.id, CID_HasCollisions) ) return false;
     HasCollisionsComponent *hc = (HasCollisionsComponent*) ecs_get(player.id, CID_HasCollisions);
@@ -25,7 +25,7 @@ bool TryGetInteractableForPlayer(Entity player, Entity *interactible)
         
         if ( !ecs_has(entB, CID_IsInteractable) ) continue;
         
-        interactible->id = entB;
+        interactable->id = entB;
         return true;
     }
     
@@ -102,7 +102,7 @@ void System_PlayerInput_Interact()
             CID_PrimaryAttack,
             ecs_get(context.interactable.id, CID_PrimaryAttack)
         );
-        //ecs_remove(interactible.id, CID_Interactible);
+        //ecs_remove(interactable.id, CID_Interactable);
     }
 }
 
@@ -138,20 +138,20 @@ void System_PerformInteraction()
     }
 }
 
-void System_DrawInteractibleForPlayer()
+void System_DrawInteractableForPlayer()
 {
     Entity player = { 0 };
-    Entity interactible = { 0 };
+    Entity interactable = { 0 };
     uint32_t i;
     QueryResult *qr = ecs_query(3, CID_PlayerId, CID_PlayerInput, CID_HasCollisions);
     
     for (i = 0; i < qr->count; ++i) {
         player.id = qr->list[i];
         
-        if ( !TryGetInteractableForPlayer(player, &interactible) ) continue;
+        if ( !TryGetInteractableForPlayer(player, &interactable) ) continue;
         
-        PositionComponent *interPos = (PositionComponent*) ecs_get(interactible.id, CID_Position);
-        DrawShapeComponent *interDraw = (DrawShapeComponent*) ecs_get(interactible.id, CID_DrawShape);
+        PositionComponent *interPos = (PositionComponent*) ecs_get(interactable.id, CID_Position);
+        DrawShapeComponent *interDraw = (DrawShapeComponent*) ecs_get(interactable.id, CID_DrawShape);
         
         Shape shape = interDraw->shape;
         float radius = 
@@ -167,18 +167,18 @@ void System_DrawInteractablePrice()
 {
     Vector2 priceOffset = { 0, -12 };
     Entity player = { 0 };
-    Entity interactible = { 0 };
+    Entity interactable = { 0 };
     uint32_t i;
     QueryResult *qr = ecs_query(3, CID_PlayerId, CID_PlayerInput, CID_HasCollisions);
     
     for (i = 0; i < qr->count; ++i) {
         player.id = qr->list[i];
         
-        if ( !TryGetInteractableForPlayer(player, &interactible) ) continue;
-        if ( !ecs_has(interactible.id, CID_PriceInCoins) ) continue;
+        if ( !TryGetInteractableForPlayer(player, &interactable) ) continue;
+        if ( !ecs_has(interactable.id, CID_PriceInCoins) ) continue;
         
-        PositionComponent *interPos = (PositionComponent*) ecs_get(interactible.id, CID_Position);
-        CoinsComponent *coins = (CoinsComponent*) ecs_get(interactible.id, CID_Coins);
+        PositionComponent *interPos = (PositionComponent*) ecs_get(interactable.id, CID_Position);
+        CoinsComponent *coins = (CoinsComponent*) ecs_get(interactable.id, CID_Coins);
         
         Vector2 pricePos = Vector2Add (*interPos, priceOffset);
         
@@ -199,6 +199,6 @@ void Systems_Interactions()
 
 void Systems_DrawInteractions()
 {
-    System_DrawInteractibleForPlayer();
+    System_DrawInteractableForPlayer();
     System_DrawInteractablePrice();
 }
