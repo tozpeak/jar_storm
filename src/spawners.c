@@ -235,6 +235,7 @@ Entity Spawn_Player(Vector2 position, char id)
         .attackSpeedMult = 1,
         .dmgMult = 1,
     };
+    CoinsComponent coins = { 0 };
     
     ecs_add(e.id, CID_Position, &pos );
     ecs_add(e.id, CID_Velocity, &vel );
@@ -245,6 +246,7 @@ Entity Spawn_Player(Vector2 position, char id)
     ecs_add(e.id, CID_SecondaryAttack, &secAtt );
     ecs_add(e.id, CID_PlayerId, &id );
     ecs_add(e.id, CID_Stats, &baseStats );
+    ecs_add(e.id, CID_Coins, &coins );
     ecs_add(e.id, CID_HasHpBar, NULL );
     ecs_add(e.id, CID_PlayerInput, NULL );
     
@@ -255,6 +257,31 @@ Entity Spawn_Player(Vector2 position, char id)
     
     return e;
 } 
+
+uint32_t Spawn_Interactable(Vector2 position)
+{
+    float radius = 6.0f;
+    Entity e = ecs_create();
+    PositionComponent pos = position;
+    Shape shape = Shapes_NewCircle_0(radius);
+    DrawShapeComponent draw = { BLUE, shape };
+    ColliderComponent col = { 
+        shape,
+        (Layer)LN_EN_BULLET
+    };
+    
+    PrimaryAttackComponent primAtt = { .attackId = ATK_ID_EVENT_GIVE_COINS };
+    CoinsComponent coins = { 5 };
+    
+    ecs_add(e.id, CID_Position, &pos );
+    ecs_add(e.id, CID_DrawShape, &draw );
+    ecs_add(e.id, CID_Collider, &col );
+    ecs_add(e.id, CID_PrimaryAttack, &primAtt );
+    ecs_add(e.id, CID_Coins, &coins );
+    ecs_add(e.id, CID_IsInteractable, NULL );
+    
+    return e.id;
+}
 
 uint32_t Spawn_RandomItem(Vector2 position)
 {

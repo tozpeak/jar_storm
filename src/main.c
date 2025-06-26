@@ -11,6 +11,7 @@
 #include <physics.h>
 #include <shapes.h>
 #include <spawners.h>
+#include <interactions.h>
 #include <helpers.h>
 
 typedef struct
@@ -587,6 +588,22 @@ void System_DrawEnemyHP()
     }
 }
 
+void System_DrawHUD_Coins()
+{
+    QueryResult *qr = ecs_query(1, CID_PlayerId);
+    uint32_t entPlayer = qr->list[0];
+    
+    CoinsComponent *coins = (CoinsComponent*) ecs_get(entPlayer, CID_Coins);
+    
+    
+    DrawText(
+        TextFormat("C:%d", coins->amount),
+        64,
+        8,
+        16, DARKGREEN
+    );
+}
+
 void System_DrawHUD_Items()
 {
     const char* labels[] = {
@@ -681,6 +698,8 @@ void Systems_GameLoop()
     System_PickItem();
     System_UpdateDirtyInventory();
     
+    Systems_Interactions();
+    
     System_KillOutOfBounds();
     System_SaveKilledPlayer();
     System_DestroyKilled();
@@ -692,7 +711,9 @@ void Systems_DrawLoop()
     
     System_Draw();
     System_DrawPlayer();
+    Systems_DrawInteractions();
     
+    System_DrawHUD_Coins();
     System_DrawHUD_Items();
 
     System_DrawDebugCollisions();
@@ -727,6 +748,10 @@ void GenerateLevel()
         for (int j = 0; j < 4; j++) {
             Spawn_RandomItem((Vector2) { 64 * (i+1), 64 * (j+1) } );
         }
+    }
+    
+    for (int i = 0; i < 4; i++) {
+        Spawn_Interactable( (Vector2) { 96 + i * 4, 96 } );
     }
 }
 

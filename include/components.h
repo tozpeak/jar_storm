@@ -37,6 +37,7 @@ typedef AttackAbility SecondaryAttackComponent;
 typedef char PlayerIdComponent;
 
 typedef uint32_t ParentIdComponent;
+typedef uint32_t TargetIdComponent;
 
 typedef struct
 {
@@ -52,6 +53,22 @@ typedef struct
     char count;
     ItemType type;
 } ItemComponent;
+
+typedef struct
+{
+    short amount;
+} CoinsComponent;
+
+/*typedef char EventId;
+enum EventIdOptions 
+{
+    EID_Kill = 0,
+    EID_Interact,
+};
+typedef struct
+{
+    EventId id;
+} EventComponent;*/
 
 typedef int StateFlagsComponent;
 
@@ -75,6 +92,10 @@ enum ComponentId
     CID_Stats,
     CID_Item,
     
+    CID_Coins,
+    CID_TargetId,
+    //CID_Event,
+    
     CID_StateFlags,
     
     CID_HasHpBar,
@@ -83,6 +104,10 @@ enum ComponentId
     CID_AiAttack,
     CID_PlayerInput,
     CID_InventoryIsDirty,
+    CID_IsInteractable,
+    
+    CID_EventInteraction,
+    CID_EventKill,
     
     CID_Count
 };

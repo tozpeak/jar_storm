@@ -27,4 +27,5 @@ uint32_t Spawn_Teleporter(Vector2 position);
 uint32_t Spawn_Enemy(Vector2 position);
 uint32_t Spawn_Enemy_Lizard(Vector2 position);
 Entity Spawn_Player(Vector2 position, char id);
+uint32_t Spawn_Interactable(Vector2 position);
 uint32_t Spawn_RandomItem(Vector2 position);

@@ -169,6 +169,40 @@ float AiPriority_ItemMushroomReset(AttackContext *context)
 }
 
 
+bool IsEventInteraction(AttackContext *context)
+{
+    if ( !ecs_has(context->entityId, CID_EventInteraction) ) return false;
+    if ( !ecs_has(context->entityId, CID_ParentId) ) return false;
+    if ( !ecs_has(context->entityId, CID_TargetId) ) return false;
+    return true;
+}
+
+void Perform_EventGiveCoins(AttackContext *context)
+{
+    if( !IsEventInteraction(context) ) return;
+    
+    uint32_t eventEntId = context->entityId;
+    
+    ParentIdComponent *actorId = (ParentIdComponent*) ecs_get(eventEntId, CID_ParentId);
+    TargetIdComponent *targetId = (TargetIdComponent*) ecs_get(eventEntId, CID_TargetId);
+    
+    CoinsComponent *actorCoins =    (CoinsComponent*) ecs_get(*actorId, CID_Coins);
+    CoinsComponent *targetCoins =   (CoinsComponent*) ecs_get(*targetId, CID_Coins);
+    
+    actorCoins->amount += targetCoins->amount;
+    targetCoins->amount = 0;
+    ecs_add(*targetId, CID_IsKilled, NULL);
+    
+    ecs_add(eventEntId, CID_IsKilled, NULL);
+}
+
+float AiPriority_EventInteraction(AttackContext *context)
+{
+    //EventInteraction "attacks" are performed by interactions module 
+    //and should never be triggered by AI
+    return 0;
+}
+
 void Attack_InitConfig()
 {
     AttackProjectile genericMeleeProjectile = {
@@ -241,6 +275,12 @@ void Attack_InitConfig()
         .cooldownTime = 0.0f,
         .performStrategy = Perform_ItemMushroomReset,
         .aiPriorityStrategy = AiPriority_ItemMushroomReset,
+    };
+    
+    configArr[ATK_ID_EVENT_GIVE_COINS] = (AttackConfig){
+        .cooldownTime = 0.0f,
+        .performStrategy = Perform_EventGiveCoins,
+        .aiPriorityStrategy = AiPriority_EventInteraction,
     };
 }
 

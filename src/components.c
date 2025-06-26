@@ -26,6 +26,10 @@ void InitComponents()
         sizeof(StatsComponent),
         sizeof(ItemComponent),
         
+        sizeof(CoinsComponent),
+        sizeof(TargetIdComponent),
+        //sizeof(EventComponent),
+        
         sizeof(StateFlagsComponent),
         
         0, //CID_HasHpBar
@@ -34,6 +38,10 @@ void InitComponents()
         0, //CID_AiAttack
         0, //CID_PlayerInput
         0, //CID_InventoryIsDirty
+        0, //CID_IsInteractable
+        
+        0, //CID_EventInteraction
+        0, //CID_EventKill
         
         0 //CID_Count
     );
