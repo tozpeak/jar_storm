@@ -163,6 +163,34 @@ void System_DrawInteractibleForPlayer()
     }
 }
 
+void System_DrawInteractablePrice()
+{
+    Vector2 priceOffset = { 0, -12 };
+    Entity player = { 0 };
+    Entity interactible = { 0 };
+    uint32_t i;
+    QueryResult *qr = ecs_query(3, CID_PlayerId, CID_PlayerInput, CID_HasCollisions);
+    
+    for (i = 0; i < qr->count; ++i) {
+        player.id = qr->list[i];
+        
+        if ( !TryGetInteractableForPlayer(player, &interactible) ) continue;
+        if ( !ecs_has(interactible.id, CID_PriceInCoins) ) continue;
+        
+        PositionComponent *interPos = (PositionComponent*) ecs_get(interactible.id, CID_Position);
+        CoinsComponent *coins = (CoinsComponent*) ecs_get(interactible.id, CID_Coins);
+        
+        Vector2 pricePos = Vector2Add (*interPos, priceOffset);
+        
+        DrawText(
+            TextFormat("C:%d", coins->amount),
+            pricePos.x,
+            pricePos.y,
+            8, INTERACTION_COLOR
+        );
+    }
+}
+
 void Systems_Interactions()
 {
     System_PlayerInput_Interact();
@@ -172,4 +200,5 @@ void Systems_Interactions()
 void Systems_DrawInteractions()
 {
     System_DrawInteractibleForPlayer();
+    System_DrawInteractablePrice();
 }
