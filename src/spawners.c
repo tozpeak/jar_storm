@@ -273,6 +273,19 @@ uint32_t Spawn_Interactable(Vector2 position)
     PrimaryAttackComponent primAtt = { .attackId = ATK_ID_EVENT_GIVE_COINS };
     CoinsComponent coins = { 5 };
     
+    int type = rand() % 2;
+    
+    switch(type) {
+    case 0: //chest
+        primAtt.attackId = ATK_ID_EVENT_GIVE_RANDOM_ITEM;
+        ecs_add(e.id, CID_PriceInCoins, NULL);
+        break;
+    case 1: //coins pot
+        primAtt.attackId = ATK_ID_EVENT_GIVE_COINS;
+        draw.shape.circle.radius = 4.0f;
+        break;
+    }
+    
     ecs_add(e.id, CID_Position, &pos );
     ecs_add(e.id, CID_DrawShape, &draw );
     ecs_add(e.id, CID_Collider, &col );

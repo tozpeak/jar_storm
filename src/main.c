@@ -746,13 +746,13 @@ void GenerateLevel()
     
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
-            Spawn_RandomItem((Vector2) { 64 * (i+1), 64 * (j+1) } );
+            Spawn_Interactable((Vector2) { 64 * (i+1), 64 * (j+1) } );
         }
     }
     
-    for (int i = 0; i < 4; i++) {
+    /*for (int i = 0; i < 4; i++) {
         Spawn_Interactable( (Vector2) { 96 + i * 4, 96 } );
-    }
+    }*/
 }
 
 int test_main();

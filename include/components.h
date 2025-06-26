@@ -106,6 +106,8 @@ enum ComponentId
     CID_InventoryIsDirty,
     CID_IsInteractable,
     
+    CID_PriceInCoins,
+    
     CID_EventInteraction,
     CID_EventKill,
     

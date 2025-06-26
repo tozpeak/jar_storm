@@ -39,6 +39,7 @@ void InitComponents()
         0, //CID_PlayerInput
         0, //CID_InventoryIsDirty
         0, //CID_IsInteractable
+        0, //CID_PriceInCoins
         
         0, //CID_EventInteraction
         0, //CID_EventKill

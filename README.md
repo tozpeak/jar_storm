@@ -32,7 +32,7 @@ C99 was chosen as an old standard, which is still in use. To better understand t
 - [x] damage multiplier (requires better spawner structure)
 - [x] prototype custom item effect
 - [x] interactible objects
-- [ ] chests
+- [x] chests
 - [ ] coins on kill
 - [ ] (optimization) rewrite mushroom to single attack
 

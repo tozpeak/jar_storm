@@ -192,8 +192,21 @@ void Perform_EventGiveCoins(AttackContext *context)
     actorCoins->amount += targetCoins->amount;
     targetCoins->amount = 0;
     ecs_add(*targetId, CID_IsKilled, NULL);
+}
+
+void Perform_EventSpawnRandomItem(AttackContext *context)
+{
+    if( !IsEventInteraction(context) ) return;
     
-    ecs_add(eventEntId, CID_IsKilled, NULL);
+    uint32_t eventEntId = context->entityId;
+    
+    ParentIdComponent *actorId = (ParentIdComponent*) ecs_get(eventEntId, CID_ParentId);
+    TargetIdComponent *targetId = (TargetIdComponent*) ecs_get(eventEntId, CID_TargetId);
+    
+    PositionComponent *targetPosition = (PositionComponent*) ecs_get(*targetId, CID_Position);
+    
+    Spawn_RandomItem(*targetPosition);
+    ecs_add(*targetId, CID_IsKilled, NULL);
 }
 
 float AiPriority_EventInteraction(AttackContext *context)
@@ -280,6 +293,11 @@ void Attack_InitConfig()
     configArr[ATK_ID_EVENT_GIVE_COINS] = (AttackConfig){
         .cooldownTime = 0.0f,
         .performStrategy = Perform_EventGiveCoins,
+        .aiPriorityStrategy = AiPriority_EventInteraction,
+    };
+    configArr[ATK_ID_EVENT_GIVE_RANDOM_ITEM] = (AttackConfig){
+        .cooldownTime = 0.0f,
+        .performStrategy = Perform_EventSpawnRandomItem,
         .aiPriorityStrategy = AiPriority_EventInteraction,
     };
 }

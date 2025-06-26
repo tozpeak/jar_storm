@@ -23,6 +23,7 @@ enum AttackIdOptions
     ATK_ID_ITEM_MUSHROOM_RESET,
     
     ATK_ID_EVENT_GIVE_COINS,
+    ATK_ID_EVENT_GIVE_RANDOM_ITEM,
     
     ATK_ID_COUNT
 };
