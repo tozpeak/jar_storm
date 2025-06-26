@@ -107,6 +107,68 @@ float AiPriority_MeleeBite(AttackContext *context)
     return 0;
 }
 
+void Perform_ItemMushroomSet(AttackContext *context)
+{
+    Entity e = { .id = context->entityId };
+    //copy config to override some values
+    AttackProjectile config = Attack_GetConfigFor(context->ability->attackId)->projectile;
+    
+    ItemComponent *item = (ItemComponent*) ecs_get(e.id, CID_Item);
+    ParentIdComponent *parentId = (ParentIdComponent*) ecs_get(e.id, CID_ParentId);
+    
+    config.radius += 16 * (item->count - 1) * 0.2f;
+    
+    ecs_add(
+        context->entityId,
+        CID_Position,
+        (PositionComponent*) ecs_get(*parentId, CID_Position)
+    );
+    
+    Spawn_AddShapeFromConfig (
+        e, &config, (Layer)LN_PL_BULLET
+    );
+    
+    DealDamageComponent dam = { 1, DMG_TARGET_OTHER | DMG_ON_TICK };
+    
+    ecs_add(e.id, CID_DealDamage, &dam );
+}
+
+void Perform_ItemMushroomReset(AttackContext *context)
+{
+    ecs_remove(context->entityId, CID_Position);
+    PrimaryAttackComponent *prim = (PrimaryAttackComponent*) ecs_get(context->entityId, CID_PrimaryAttack);
+    AttackConfig *primConfig = Attack_GetConfigFor(prim->attackId);
+    
+    prim->state = ATK_ST_COOLDOWN;
+    prim->cooldown = primConfig->cooldownTime;
+}
+
+float AiPriority_ItemMushroomSet(AttackContext *context)
+{
+    if ( !ecs_has(context->entityId, CID_ParentId) ) return 0;
+    if (  ecs_has(context->entityId, CID_Position) ) return 0; //already set
+    
+    ParentIdComponent *parentId = (ParentIdComponent*) ecs_get(context->entityId, CID_ParentId);
+    VelocityComponent *parentVelocity = (VelocityComponent*) ecs_get(*parentId, CID_Velocity);
+    
+    if ( Vector2LengthSqr(*parentVelocity) > 0 ) return 0;
+    
+    return 50;
+}
+
+float AiPriority_ItemMushroomReset(AttackContext *context)
+{
+    if ( !ecs_has(context->entityId, CID_ParentId) ) return 0;
+    //if ( !ecs_has(context->entityId, CID_Position) ) return 0; //already reset
+    ParentIdComponent *parentId = (ParentIdComponent*) ecs_get(context->entityId, CID_ParentId);
+    VelocityComponent *parentVelocity = (VelocityComponent*) ecs_get(*parentId, CID_Velocity);
+    
+    if ( Vector2LengthSqr(*parentVelocity) == 0 ) return 0;
+    
+    return 100;
+}
+
+
 void Attack_InitConfig()
 {
     AttackProjectile genericMeleeProjectile = {
@@ -162,6 +224,23 @@ void Attack_InitConfig()
         .performStrategy = Perform_MeleeGeneric,
         .aiPriorityStrategy = AiPriority_MeleeBite,
         .projectile = genericMeleeProjectile,
+    };
+    
+    configArr[ATK_ID_ITEM_MUSHROOM_SET] = (AttackConfig){
+        .cooldownTime = 2.0f,
+        .performStrategy = Perform_ItemMushroomSet,
+        .aiPriorityStrategy = AiPriority_ItemMushroomSet,
+        .projectile = {
+            .radius = 16 * 2.0f,
+            .baseDmg = 12,
+            .hp = 1,
+            .color = (Color){ 255, 0, 0, 127 },
+        },
+    };
+    configArr[ATK_ID_ITEM_MUSHROOM_RESET] = (AttackConfig){
+        .cooldownTime = 0.0f,
+        .performStrategy = Perform_ItemMushroomReset,
+        .aiPriorityStrategy = AiPriority_ItemMushroomReset,
     };
 }
 

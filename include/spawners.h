@@ -12,9 +12,10 @@ Entity Spawn_Projectile(
 );
 void Spawn_AddVelocity(Entity e, float linearVelocity, Vector2 aimDirection);
 void Spawn_AddShape(Entity e, Shape shape, Color color, Layer layer);
-void Spawn_AddShapeBullet(Entity e, Color color, Layer layer);Entity 
+void Spawn_AddShapeBullet(Entity e, Color color, Layer layer);
+void Spawn_AddShapeFromConfig(Entity e, AttackProjectile *config, Layer layer);
 
-Spawn_BuildGenericProjectile(
+Entity Spawn_BuildGenericProjectile(
     Vector2 projPosition, 
     Vector2 projDirection, 
     Layer layer, 

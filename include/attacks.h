@@ -19,6 +19,9 @@ enum AttackIdOptions
     ATK_ID_MELEE_CLAW,
     ATK_ID_MELEE_CLAP,
     
+    ATK_ID_ITEM_MUSHROOM_SET,
+    ATK_ID_ITEM_MUSHROOM_RESET,
+    
     ATK_ID_COUNT
 };
 

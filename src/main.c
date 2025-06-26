@@ -592,7 +592,8 @@ void System_DrawHUD_Items()
     const char* labels[] = {
         "MVS",
         "ATS",
-        "DMG"
+        "DMG",
+        "MSH"
     };
 
     QueryResult *qr = ecs_query(1, CID_PlayerId);

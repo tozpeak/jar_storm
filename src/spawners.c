@@ -62,6 +62,19 @@ void Spawn_AddShapeBullet(Entity e, Color color, Layer layer)
     Spawn_AddShape( e, shape, color, layer );
 }
 
+void Spawn_AddShapeFromConfig(Entity e, AttackProjectile *config, Layer layer)
+{
+    if(config->radius > 0) {
+        Spawn_AddShape(
+            e, 
+            Shapes_NewCircle_0(config->radius),
+            config->color, 
+            layer
+        );
+    }
+    else Spawn_AddShapeBullet(e, config->color, layer);
+}
+
 Entity Spawn_BuildGenericProjectile(
     Vector2 projPosition, 
     Vector2 projDirection, 
@@ -71,8 +84,6 @@ Entity Spawn_BuildGenericProjectile(
     AttackProjectile *config = &( 
         Attack_GetConfigFor(context->ability->attackId)->projectile
     );
-    
-    AttackProjectile pConfig = *config;
 
     Entity e = Spawn_Projectile(
         projPosition,
@@ -83,15 +94,7 @@ Entity Spawn_BuildGenericProjectile(
     
     if(config->velocity > 0) Spawn_AddVelocity(e, config->velocity, projDirection);
     
-    if(config->radius > 0) {
-        Spawn_AddShape(
-            e, 
-            Shapes_NewCircle_0(config->radius),
-            config->color, 
-            layer
-        );
-    }
-    else Spawn_AddShapeBullet(e, config->color, layer);
+    Spawn_AddShapeFromConfig(e, config, layer);
     
     return e;
 }
@@ -258,7 +261,7 @@ uint32_t Spawn_RandomItem(Vector2 position)
     float radius = 3.0f;
     Entity e = ecs_create();
     PositionComponent pos = position;
-    Shape shape = Shapes_NewCircle(Vector2Zero(), radius);
+    Shape shape = Shapes_NewCircle_0(radius);
     DrawShapeComponent draw = { LIME, shape };
     ColliderComponent col = { 
         shape,
@@ -267,7 +270,7 @@ uint32_t Spawn_RandomItem(Vector2 position)
     
     ItemComponent item = { 
         .count = 1,
-        .type = rand() % 3
+        .type = rand() % 4
     };
     
     StatsComponent stats = { 0 };
@@ -275,6 +278,14 @@ uint32_t Spawn_RandomItem(Vector2 position)
         case 0: stats.velocity = 16 * 4 * 0.15f; break;
         case 1: stats.attackSpeedMult = 0.15f; break;
         case 2: stats.dmgMult = 0.25f; break;
+        case 3: {
+            PrimaryAttackComponent primAtt = { .attackId = ATK_ID_ITEM_MUSHROOM_SET };
+            SecondaryAttackComponent secAtt = { .attackId = ATK_ID_ITEM_MUSHROOM_RESET };
+            
+            ecs_add(e.id, CID_PrimaryAttack, &primAtt);
+            ecs_add(e.id, CID_SecondaryAttack, &secAtt);
+            ecs_add(e.id, CID_AiAttack, NULL);
+        } break;
     }
     
     ecs_add(e.id, CID_Position, &pos );

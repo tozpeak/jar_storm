@@ -30,10 +30,15 @@ C99 was chosen as an old standard, which is still in use. To better understand t
     - move speed,
     - attack speed,
 - [x] damage multiplier (requires better spawner structure)
-- [ ] more custom item effects
+- [x] prototype custom item effect
 - [ ] interactible objects
 - [ ] chests
 - [ ] coins on kill
+- [ ] (optimization) rewrite mushroom to single attack
+
+### New Items and Effects
+
+- [ ] (creative, low priority) add more items and effects to this list
 
 ## Enemy Behaviour
 
