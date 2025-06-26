@@ -732,8 +732,22 @@ void GenerateLevel()
 
 int test_main();
 
+int test_limits()
+{
+    if (CID_Count >= 32) {
+        printf( "CID_Count is %d >= 32!\n"
+                "Move flag components to separate bitmask or make the current mask bigger.\n"
+                , CID_Count);
+        return 1;
+    }
+    return 0;
+}
+
 int main ()
 {
+    int limitsResult = test_limits();
+    if(limitsResult > 0) return limitsResult;
+    
     //return test_main();
 
     // Tell the window to use vsync and work on high DPI displays
