@@ -22,6 +22,7 @@ typedef struct
     Vector2 tileSize;
     int marginTiles;
     int marginTopTiles;
+    int levelScale;
     Camera2D *camera;
 } ScreenSettings;
 
@@ -32,12 +33,14 @@ const ScreenSettings g_screenSettings = {
     .tileSize = { 16, 16 },
     .marginTiles = 1,
     .marginTopTiles = 2,
+    .levelScale = 2,
     .camera = &mainCamera,
  };
 
 void DrawChessboard() 
 {
-    int screenX = g_screenSettings.width, screenY = g_screenSettings.height;
+    int screenX = g_screenSettings.width * g_screenSettings.levelScale,
+        screenY = g_screenSettings.height * g_screenSettings.levelScale;
     Vector2 tileSize = g_screenSettings.tileSize;
     int offsetTiles = g_screenSettings.marginTiles;
     int offsetTopTiles = g_screenSettings.marginTopTiles;
@@ -164,8 +167,8 @@ void System_KeepWandererInBounds()
     Rectangle levelBounds = {
         tileSize.x * g_screenSettings.marginTiles,
         tileSize.y * g_screenSettings.marginTopTiles,
-        g_screenSettings.width - tileSize.x * (g_screenSettings.marginTiles * 2),
-        g_screenSettings.height - tileSize.y * (g_screenSettings.marginTiles + g_screenSettings.marginTopTiles),
+        g_screenSettings.width * g_screenSettings.levelScale - tileSize.x * (g_screenSettings.marginTiles * 2),
+        g_screenSettings.height * g_screenSettings.levelScale - tileSize.y * (g_screenSettings.marginTiles + g_screenSettings.marginTopTiles),
     };
     Vector2 levelCenter = {
         g_screenSettings.width / 2,
@@ -390,10 +393,41 @@ void System_SpawnRandomUnit(float deltaTime)
     
     int spawnMargin = 16 * 4;
     
-    Vector2 position = {
-        .x = ( rand() % (g_screenSettings.width  - 2 * spawnMargin) + spawnMargin ),
-        .y = ( rand() % (g_screenSettings.height - 2 * spawnMargin) + spawnMargin ),
-    };
+    int levelSizeX = g_screenSettings.width * g_screenSettings.levelScale,
+        levelSizeY = g_screenSettings.height * g_screenSettings.levelScale;
+        
+    float spawnRadius = 16 * 12;
+    
+    QueryResult *qr = ecs_query(2, CID_Position, CID_PlayerId);
+    
+    if (qr->count < 1) return;
+    
+    ECS_GET_NEW(playerPos, qr->list[0], Position);
+    Vector2 position;
+    Vector2 up = (Vector2) { 0, 1 };
+    
+    int iterationsAllowed = 10;
+    
+    do {
+        position = Vector2Add(
+            *playerPos,
+            Vector2Scale(
+                Vector2Rotate( up, (rand() % 628) / 100.f ), // rand (0 .. 2*PI)
+                spawnRadius * ( 10 + rand() % 90 ) / 100.f // rand (0.1 .. 1.0)
+            )
+        );
+        iterationsAllowed--;
+        
+        if (iterationsAllowed <= 0) return;
+        
+    } while (
+        position.x < spawnMargin
+        || position.x > (levelSizeX - spawnMargin)
+        || position.y < spawnMargin
+        || position.y > (levelSizeY - spawnMargin)
+    );
+    
+    
     
     if (isLizard)
         Spawn_Enemy_Lizard(position);
@@ -699,13 +733,16 @@ bool System_DebugPause()
 
 void System_KillOutOfBounds() 
 {
+    int boundsX = g_screenSettings.width * g_screenSettings.levelScale,
+        boundsY = g_screenSettings.height * g_screenSettings.levelScale;
+    
     uint32_t i;
     QueryResult *qr = ecs_query(1, CID_Position);
     for (i = 0; i < qr->count; ++i) {
         PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
-        if (pos->x > g_screenSettings.width 
+        if (pos->x > boundsX
          || pos->x < 0
-         || pos->y > g_screenSettings.height
+         || pos->y > boundsY
          || pos->y < 0
         ) ecs_add(qr->list[i], CID_IsKilled, NULL);
     }
@@ -751,20 +788,25 @@ void Systems_DrawLoop()
     System_Draw();
     System_DrawPlayer();
     Systems_DrawInteractions();
-    
-    System_DrawHUD_Coins();
-    System_DrawHUD_Items();
 
     System_DrawDebugCollisions();
 
     System_DrawEnemyHP();
 }
 
+void Systems_DrawUILoop()
+{
+    System_DrawHUD_Coins();
+    System_DrawHUD_Items();
+}
+
 void GenerateLevel()
 {
-    int pillarCount = 20;
+    int pillarCount = 20 * g_screenSettings.levelScale * g_screenSettings.levelScale;
+    int interactableCount = 48;
 
-    int screenX = g_screenSettings.width, screenY = g_screenSettings.height;
+    int screenX = g_screenSettings.width * g_screenSettings.levelScale,
+        screenY = g_screenSettings.height * g_screenSettings.levelScale;
     Vector2 tileSize = g_screenSettings.tileSize;
     Rectangle levelRect = {
         g_screenSettings.marginTiles * tileSize.x,
@@ -783,10 +825,11 @@ void GenerateLevel()
         } );
     }
     
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            Spawn_Interactable((Vector2) { 64 * (i+1), 64 * (j+1) } );
-        }
+    for (int i = 0; i < interactableCount; i++) {
+        Spawn_Interactable((Vector2) {
+            rand() % (int)round(levelRect.width) + levelRect.x,
+            rand() % (int)round(levelRect.height) + levelRect.y,
+        } );
     }
     
     /*for (int i = 0; i < 4; i++) {
@@ -824,9 +867,11 @@ int main ()
     InitWindow(g_screenSettings.width * screenScale, g_screenSettings.height * screenScale, "Hello Raylib");
     //SetWindowSize(g_screenSettings.width * screenScale, g_screenSettings.height * screenScale);
 
+    Vector2 centerScreenOffset = (Vector2){ g_screenSettings.width / 2.f, g_screenSettings.height / 2.f };
+    
     Camera2D *camera = g_screenSettings.camera;
     camera->target = (Vector2){ 0 };
-    camera->offset = (Vector2){ 0 };
+    camera->offset = Vector2Scale(centerScreenOffset, screenScale);
     camera->rotation = 0.0f;
     camera->zoom = screenScale;
 
@@ -853,15 +898,22 @@ int main ()
         
         // drawing
         BeginDrawing();
-
+        
         // Setup the back buffer for drawing (clear color and depth buffers)
         ClearBackground(BLACK);
-
-        BeginMode2D(*camera);
-
-        Systems_DrawLoop();
         
+        ECS_GET_NEW(playerPos, player.id, Position);
+        camera->target = *playerPos;
+        BeginMode2D(*camera);
+        Systems_DrawLoop();
         EndMode2D();
+        
+        camera->zoom = screenScale;
+        camera->target = centerScreenOffset;
+        BeginMode2D(*camera);
+        Systems_DrawUILoop();
+        EndMode2D();
+        camera->target = *playerPos;
         
         DrawFPS(1, 1);
         DrawText(
@@ -956,6 +1008,7 @@ int test_main()
         ClearBackground(BLACK);
 
         Systems_DrawLoop();
+        Systems_DrawUILoop();
 
         // end the frame and get ready for the next one  (display frame, poll input, etc...)
         EndDrawing();
