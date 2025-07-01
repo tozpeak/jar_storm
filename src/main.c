@@ -13,6 +13,7 @@
 #include <spawners.h>
 #include <interactions.h>
 #include <helpers.h>
+#include <ecs_helpers.h>
 
 typedef struct
 {
@@ -129,7 +130,19 @@ void System_DealDamageNew(float delta)
                 HealthComponent *hp = (HealthComponent*)ecs_get(entB, CID_Health);
                 
                 hp->hp -= dam->damage * dmgMult;
-                if(hp->hp <= 0) ecs_add(entB, CID_IsKilled, NULL);
+                if(hp->hp <= 0) 
+                {
+                    if ( !ecs_has(entB, CID_IsKilled) )
+                    {
+                        ecs_add(entB, CID_IsKilled, NULL);
+                        
+                        Entity eKillEvent = ecs_create();
+                        ecs_add(eKillEvent.id, CID_ParentId, &entA);
+                        ecs_add(eKillEvent.id, CID_TargetId, &entB);
+                        ecs_add(eKillEvent.id, CID_EventKill, NULL);
+                        ecs_add(eKillEvent.id, CID_IsKilled, NULL); // events live only single frame
+                    }
+                }
             }
             
             if (dam->flags & DMG_TARGET_SELF
@@ -509,6 +522,30 @@ void System_UpdateDirtyInventory()
     }
 }
 
+void System_GetCoinsOnKill()
+{
+    uint32_t i;
+    QueryResult *qr = ecs_query(1, CID_EventKill);
+    
+    for (i = 0; i < qr->count; ++i) {
+        uint32_t entEvent = qr->list[i];
+        
+        ECS_GET_NEW(entProjectile, entEvent, ParentId);
+        ECS_GET_NEW(entTarget, entEvent, TargetId);
+        
+        if ( !ecs_has(*entProjectile, CID_ParentId) ) continue;
+        ECS_GET_NEW(entShooter, *entProjectile, ParentId);
+        
+        if ( !ecs_has(*entShooter, CID_Coins) ) continue;
+        if ( !ecs_has(*entTarget, CID_Coins) ) continue;
+        ECS_GET_NEW(coinsShooter, *entShooter, Coins);
+        ECS_GET_NEW(coinsTarget, *entTarget, Coins);
+        
+        coinsShooter->amount += coinsTarget->amount;
+        coinsTarget->amount = 0;
+    }
+}
+
 void System_SaveKilledPlayer()
 {
     uint32_t i;
@@ -699,6 +736,8 @@ void Systems_GameLoop()
     System_UpdateDirtyInventory();
     
     Systems_Interactions();
+    
+    System_GetCoinsOnKill();
     
     System_KillOutOfBounds();
     System_SaveKilledPlayer();

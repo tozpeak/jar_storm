@@ -33,7 +33,7 @@ C99 was chosen as an old standard, which is still in use. To better understand t
 - [x] prototype custom item effect
 - [x] interactible objects
 - [x] chests
-- [ ] coins on kill
+- [x] coins on kill
 - [ ] (optimization) rewrite mushroom to single attack
 
 ### New Items and Effects

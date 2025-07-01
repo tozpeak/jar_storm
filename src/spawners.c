@@ -25,10 +25,12 @@ Entity Spawn_Projectile(Vector2 projPosition, short dmg, short maxHp, AttackCont
     
     DealDamageComponent dam = { dmg, DMG_TARGET_SELF | DMG_TARGET_OTHER };
     HealthComponent hp = { maxHp, maxHp };
+    ParentIdComponent parentId = context->entityId;
     
     ecs_add(e.id, CID_Position, &projPosition);
     ecs_add(e.id, CID_DealDamage, &dam );
     ecs_add(e.id, CID_Health, &hp );
+    ecs_add(e.id, CID_ParentId, &parentId );
     
     return e;
 }
@@ -144,6 +146,13 @@ uint32_t Spawn_Teleporter(Vector2 position)
     return e.id;
 }
 
+void Spawn_AddCoins(Entity e, short amount)
+{
+    CoinsComponent coins = { amount };
+    
+    ecs_add(e.id, CID_Coins, &coins);
+}
+
 uint32_t Spawn_Enemy(Vector2 position) 
 {
     float radius = 6.0f;
@@ -172,6 +181,8 @@ uint32_t Spawn_Enemy(Vector2 position)
     ecs_add(e.id, CID_IsWanderer, NULL );
     ecs_add(e.id, CID_AiAttack, NULL );
     ecs_add(e.id, CID_HasHpBar, NULL );
+    
+    Spawn_AddCoins(e, 3);
     
     return e.id;
 }
@@ -207,6 +218,8 @@ uint32_t Spawn_Enemy_Lizard(Vector2 position)
     ecs_add(e.id, CID_IsWanderer, NULL );
     ecs_add(e.id, CID_AiAttack, NULL );
     ecs_add(e.id, CID_HasHpBar, NULL );
+    
+    Spawn_AddCoins(e, 8);
     
     return e.id;
 }
