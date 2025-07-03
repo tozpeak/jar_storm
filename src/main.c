@@ -659,6 +659,20 @@ void System_DrawEnemyHP()
     }
 }
 
+void System_DrawHUD_HeaderBackground()
+{
+    int boundsX = g_screenSettings.width * g_screenSettings.levelScale,
+        boundsY = g_screenSettings.height * g_screenSettings.levelScale;
+    
+    DrawRectangle(
+        0,
+        0,
+        g_screenSettings.width,
+        2 * g_screenSettings.tileSize.y,
+        (Color) { 0, 0, 0, 198 }
+    );
+}
+
 void System_DrawHUD_Coins()
 {
     QueryResult *qr = ecs_query(1, CID_PlayerId);
@@ -796,6 +810,7 @@ void Systems_DrawLoop()
 
 void Systems_DrawUILoop()
 {
+    System_DrawHUD_HeaderBackground();
     System_DrawHUD_Coins();
     System_DrawHUD_Items();
 }
