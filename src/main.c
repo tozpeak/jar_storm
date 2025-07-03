@@ -137,30 +137,27 @@ void System_Move(float deltaTime)
     uint32_t i;
     QueryResult *qr = ecs_query(2, CID_Position, CID_Velocity);
     for (i = 0; i < qr->count; ++i) {
-        PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
-        VelocityComponent *vel = (VelocityComponent*)ecs_get(qr->list[i], CID_Velocity);
-        pos->x += vel->x * deltaTime;
-        pos->y += vel->y * deltaTime;
-        /*if (pos->x > RENDER_WIDTH || pos->x < 0)
-            vel->x *= -1;
-        if (pos->y > RENDER_HEIGHT || pos->y < 0)
-            vel->y *= -1;*/
+        DynamicVector3 *pos = (DynamicVector3*)ecs_get(qr->list[i], CID_Position);
+        DynamicVector3 *vel = (DynamicVector3*)ecs_get(qr->list[i], CID_Velocity);
+        *pos = Vector3Add(
+            *pos,
+            Vector3Scale( *vel, deltaTime )
+        );
     }
 }
 
-void System_FallOnGravity()
+void System_FallFromFloorOnGravity()
 {
     uint32_t i;
     QueryResult *qr = ecs_query(2, CID_Position, CID_HasGravity);
     for (i = 0; i < qr->count; ++i) {
         uint32_t entId = qr->list[i];
-        if ( ecs_has(entId, CID_Vertical) ) continue;
+        if ( ecs_has(entId, CID_IsFalling) ) continue;
         
         ECS_GET_NEW(pos, entId, Position);
         if( !IsPositionInPit(*pos) ) continue;
         
-        VerticalComponent vert = { 0, 0 };
-        ecs_add(entId, CID_Vertical, &vert);
+        ecs_add(entId, CID_IsFalling, NULL);
     }
 }
 
@@ -169,76 +166,76 @@ void System_DropOnGround(float deltaTime)
     bool onTheGround = true;
     
     uint32_t i;
-    QueryResult *qr = ecs_query(2, CID_Position, CID_Vertical);
+    QueryResult *qr = ecs_query(3, CID_Position, CID_Velocity, CID_IsFalling);
     for (i = 0; i < qr->count; ++i) {
         uint32_t entId = qr->list[i];
-        ECS_GET_NEW(vert, entId, Vertical);
-        
+        DynamicVector3 *pos = (DynamicVector3*)ecs_get(entId, CID_Position);
+        DynamicVector3 *vel = (DynamicVector3*)ecs_get(entId, CID_Velocity);
         //if crossing plane z=0
         if (
-            vert->zpos > 0
-            && vert->zvel < 0
-            && vert->zpos < -vert->zvel * deltaTime
+            pos->z > 0
+            && vel->z < 0
+            && pos->z < -vel->z * deltaTime
         ) {
-            ECS_GET_NEW(pos, entId, Position);
-            onTheGround = !IsPositionInPit(*pos);
+            onTheGround = !IsPositionInPit(*(DynamicVector2*)pos);
             if (!onTheGround) continue;
-            vert->zpos = 0;
-            vert->zvel = 0;
-            ecs_remove(entId, CID_Vertical);
+            pos->z = 0;
+            vel->z = 0;
+            ecs_remove(entId, CID_IsFalling);
         }
     }
 }
 
-void System_MoveVertical(float deltaTime)
+void System_MoveGravity(float deltaTime)
 {
     const float gravity = 16 * 6.f;
     uint32_t i;
-    QueryResult *qr = ecs_query(1, CID_Vertical);
+    QueryResult *qr = ecs_query(2, CID_Velocity, CID_IsFalling);
     for (i = 0; i < qr->count; ++i) {
-        ECS_GET_NEW(vert, qr->list[i], Vertical);
-        vert->zpos += vert->zvel * deltaTime;
-        vert->zvel -= gravity * deltaTime;
+        DynamicVector3 *vel = (DynamicVector3*)ecs_get(qr->list[i], CID_Velocity);
+        vel->z -= gravity * deltaTime;
     }
 }
 
-void System_FallOutOfMap()
+void System_FallOutOfVerticalBounds()
 {
     uint32_t i;
-    QueryResult *qr = ecs_query(1, CID_Vertical);
+    QueryResult *qr = ecs_query(3, CID_Velocity, CID_HasGravity, CID_IsFalling);
     for (i = 0; i < qr->count; ++i) {
         uint32_t entId = qr->list[i];
-        ECS_GET_NEW(vert, entId, Vertical);
-        if (vert->zpos > -16 * 1.5f) continue;
+        DynamicVector *pos = (DynamicVector*)ecs_get(entId, CID_Position);
+        DynamicVector *vel = (DynamicVector*)ecs_get(entId, CID_Velocity);
+        if (pos->v3.z > -16 * 1.5f) continue;
         
-        vert->zpos = 1;
+        pos->v3.z = 1;
         
         if( ecs_has(entId, CID_Health) ) {
             ECS_GET_NEW(hp, entId, Health);
             hp->hp -= 16;
         }
         
-        ECS_GET_NEW(pos, entId, Position);
-        Vector2 newPos = *pos;
-        if( ecs_has(entId, CID_Velocity) ) {
-            ECS_GET_NEW(vel, entId, Velocity);
-            Vector2 dPos = Vector2Scale(*vel, 0.25f);
-            for(int j = -1; j < 10; j++) {
-                newPos = Vector2Subtract(newPos, dPos);
-                if( j >=0 && !IsPositionInPit(newPos) ) break;
-            }
+        Vector2 newPos = pos->v2;
+        
+        Vector2 dPos = Vector2Scale(vel->v2, 0.25f);
+        //game design decision:
+        //making 2 steps back before looking for the ground
+        //to prevent respawning across the pit
+        for(int j = -1; j < 10; j++) {
+            newPos = Vector2Subtract(newPos, dPos);
+            if( j >=0 && !IsPositionInPit(newPos) ) break;
         }
+        
         if( IsPositionInPit(newPos) ) newPos = (Vector2) { 32, 32 };
-        *pos = newPos;
+        pos->v2 = newPos;
     }
 }
 
 void Systems_VerticalMovement(float deltaTime)
 {
-    System_FallOnGravity();
+    System_FallFromFloorOnGravity();
     System_DropOnGround(deltaTime);
-    System_MoveVertical(deltaTime);
-    System_FallOutOfMap();
+    System_MoveGravity(deltaTime);
+    System_FallOutOfVerticalBounds();
 }
 
 void System_DealDamageNew(float delta)
@@ -437,7 +434,7 @@ void System_PlayerInput()
         
         context.entityId = playerEntId;
         
-        bool isFalling = ecs_has(playerEntId, CID_Vertical);
+        bool isFalling = ecs_has(playerEntId, CID_IsFalling);
         //PlayerIdComponent playerId = * (PlayerIdComponent*)ecs_get(playerEntId, CID_PlayerId);
         
         walkInput = Vector2Zero();
@@ -459,8 +456,9 @@ void System_PlayerInput()
         }
         
         if (!isFalling && IsKeyDown(KEY_SPACE)) {
-            VerticalComponent vert = { 0, 16 * 2 };
-            ecs_add(playerEntId, CID_Vertical, &vert);
+            DynamicVector3 *vel3 = (DynamicVector3*)ecs_get(playerEntId, CID_Velocity);
+            vel3->z = 16 * 2;
+            ecs_add(playerEntId, CID_IsFalling, NULL);
         }
         
         PositionComponent* playerPos = (PositionComponent*)ecs_get(playerEntId, CID_Position);
@@ -734,10 +732,16 @@ void System_SaveKilledPlayer()
 
 void System_DestroyKilled()
 {
+    static DynamicVector3 zero = (Vector3) { 0 };
+    
     uint32_t i;
     QueryResult *qr = ecs_query(1, CID_IsKilled);
     for (i = 0; i < qr->count; ++i) {
-        ecs_kill(qr->list[i]);
+        uint32_t entId = qr->list[i];
+        //set 0 into dynamic vectors to prevent z component from leaking
+        ecs_add(entId, CID_Position, &zero);
+        ecs_add(entId, CID_Velocity, &zero);
+        ecs_kill(entId);
     }
 }
 
@@ -764,15 +768,12 @@ void System_DrawPlayer()
     for (i = 0; i < qr->count; ++i) {
         uint32_t playerEntId = qr->list[i];
         
-        PositionComponent* playerPos = (PositionComponent*)ecs_get(playerEntId, CID_Position);
-        Vector2 pos = *playerPos;
+        DynamicVector *playerPos = (DynamicVector*)ecs_get(playerEntId, CID_Position);
+        Vector2 pos = playerPos->v2;
         Vector2 dz = Vector2Zero();
         
-        if ( ecs_has(playerEntId, CID_Vertical) ) {
-            ECS_GET_NEW(vert, playerEntId, Vertical);
-            dz.y -= vert->zpos;
-            pos = Vector2Add(pos, dz);
-        }
+        dz.y -= playerPos->v3.z;
+        pos = Vector2Add(pos, dz);
         
         Vector2 aimTo = GetScreenToWorld2D(
             Vector2Add( GetMousePosition(), dz ),

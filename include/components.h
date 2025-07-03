@@ -16,12 +16,19 @@ enum DamageFlagOptions
     DMG_ON_TICK = 1 << 2,
 };
 
-typedef Vector2 PositionComponent;
-typedef Vector2 VelocityComponent;
-typedef struct {
-    float zpos;
-    float zvel;
-} VerticalComponent;
+//DynamicVector allows us to use mostly 2d logic,
+//while allocating 3d vector, which will be used
+//in fixed amount of contexts
+typedef Vector2 DynamicVector2;
+typedef Vector3 DynamicVector3;
+typedef union
+{
+    DynamicVector2 v2;
+    DynamicVector3 v3;
+} DynamicVector;
+
+typedef DynamicVector2 PositionComponent;
+typedef DynamicVector2 VelocityComponent;
 
 typedef struct
 {
@@ -80,7 +87,6 @@ enum ComponentId
 {
     CID_Position = 0,
     CID_Velocity,
-    CID_Vertical,
     CID_Collider, //defined in physics.h
     CID_HasCollisions, //defined in physics.h
     CID_DrawShape, //defined in shapes.h
@@ -105,6 +111,7 @@ enum ComponentId
     
     CID_HasHpBar,
     CID_HasGravity,
+    CID_IsFalling,
     CID_IsKilled,
     CID_IsWanderer,
     CID_AiAttack,

@@ -8,9 +8,8 @@
 void InitComponents() 
 {
     ecs_init(CID_Count, 
-        sizeof(PositionComponent), 
-        sizeof(VelocityComponent), 
-        sizeof(VerticalComponent), 
+        sizeof(DynamicVector), //CID_Position
+        sizeof(DynamicVector), //CID_Velocity
         sizeof(ColliderComponent), 
         sizeof(HasCollisionsComponent), 
         sizeof(DrawShapeComponent),
