@@ -181,6 +181,7 @@ uint32_t Spawn_Enemy(Vector2 position)
     ecs_add(e.id, CID_IsWanderer, NULL );
     ecs_add(e.id, CID_AiAttack, NULL );
     ecs_add(e.id, CID_HasHpBar, NULL );
+    ecs_add(e.id, CID_HasGravity, NULL );
     
     Spawn_AddCoins(e, 3);
     
@@ -218,6 +219,7 @@ uint32_t Spawn_Enemy_Lizard(Vector2 position)
     ecs_add(e.id, CID_IsWanderer, NULL );
     ecs_add(e.id, CID_AiAttack, NULL );
     ecs_add(e.id, CID_HasHpBar, NULL );
+    ecs_add(e.id, CID_HasGravity, NULL );
     
     Spawn_AddCoins(e, 8);
     
@@ -261,6 +263,7 @@ Entity Spawn_Player(Vector2 position, char id)
     ecs_add(e.id, CID_Stats, &baseStats );
     ecs_add(e.id, CID_Coins, &coins );
     ecs_add(e.id, CID_HasHpBar, NULL );
+    ecs_add(e.id, CID_HasGravity, NULL );
     ecs_add(e.id, CID_PlayerInput, NULL );
     
     Entity parent = ecs_create();

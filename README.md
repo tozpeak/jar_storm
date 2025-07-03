@@ -55,11 +55,14 @@ C99 was chosen as an old standard, which is still in use. To better understand t
     - [ ] generated on the go
 - [ ] ? limited view ? (make decision):
     - [ ] fog of war
-    - [ ] level bigger than viewport with moving camera
+    - [x] (prototype is ready) level bigger than viewport with moving camera
     - [ ] segmented level, like rooms in Binding of Isaac
 - [ ] teleporters to the next stage
 - [ ] boss enemies
 - [ ] pits + jump/fly systems
+    - [x] prototype
+    - [ ] cleanup code
+    - [ ] bugfix
 
 ## Main Menu
 

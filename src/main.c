@@ -15,6 +15,8 @@
 #include <helpers.h>
 #include <ecs_helpers.h>
 
+#define BACKGROUND_COLOR BLACK
+
 typedef struct
 {
     int width;
@@ -31,11 +33,39 @@ const ScreenSettings g_screenSettings = {
     .width = 640, 
     .height = 480,
     .tileSize = { 16, 16 },
-    .marginTiles = 1,
-    .marginTopTiles = 2,
+    .marginTiles = 0,
+    .marginTopTiles = 0,
     .levelScale = 2,
     .camera = &mainCamera,
  };
+
+bool IsTilePit(int x, int y)
+{
+    if (x < 0) return true;
+    if (x >= (g_screenSettings.width / g_screenSettings.tileSize.x) * g_screenSettings.levelScale) return true;
+    if (y < 0) return true;
+    if (y >= (g_screenSettings.height / g_screenSettings.tileSize.y) * g_screenSettings.levelScale) return true;
+    
+    if (
+        ((x % 32) >= 30) 
+        && ((y % 12) < 10)
+    ) return true;
+        
+    if (
+        ((y % 32) >= 30) 
+        && ((x % 12) < 10)
+    ) return true;
+    
+    return false;
+}
+
+bool IsPositionInPit(Vector2 position)
+{
+    return IsTilePit(
+        (int)floor(position.x / g_screenSettings.tileSize.x),
+        (int)floor(position.y / g_screenSettings.tileSize.y)
+    );
+}
 
 void DrawChessboard() 
 {
@@ -46,18 +76,21 @@ void DrawChessboard()
     int offsetTopTiles = g_screenSettings.marginTopTiles;
     Color tileColor = DARKGRAY;
     
-    DrawRectangle(
+    /*DrawRectangle(
         offsetTiles * tileSize.x,
         offsetTopTiles * tileSize.y,
         screenX - ( offsetTiles * 2 ) * tileSize.x,
         screenY - ( offsetTiles + offsetTopTiles ) * tileSize.y,
         GRAY
-    );
+    );*/
     
     for (int i = offsetTiles; (i + offsetTiles) * tileSize.x < screenX; i++) 
     {
-        for (int j = offsetTopTiles + (i % 2); (j + offsetTiles) * tileSize.y < screenY; j += 2) 
+        for (int j = offsetTopTiles; (j + offsetTiles - 1) * tileSize.y < screenY; j++) 
         {
+            tileColor = ((i + j)%2 == 0) ? GRAY : DARKGRAY;
+            bool isPit = IsTilePit(i, j);
+            if (isPit) tileColor = BACKGROUND_COLOR;
             DrawRectangle(
                 i * tileSize.x,
                 j * tileSize.y,
@@ -65,6 +98,16 @@ void DrawChessboard()
                 tileSize.y,
                 tileColor
             );
+            
+            if (isPit && !IsTilePit(i, j-1) ) {
+                DrawRectangle(
+                    i * tileSize.x,
+                    j * tileSize.y,
+                    tileSize.x,
+                    6,
+                    (Color){ 40, 40, 40, 255 }
+                );
+            }
         }
     }
 }
@@ -105,6 +148,98 @@ void System_Move(float deltaTime)
     }
 }
 
+void System_FallOnGravity()
+{
+    uint32_t i;
+    QueryResult *qr = ecs_query(2, CID_Position, CID_HasGravity);
+    for (i = 0; i < qr->count; ++i) {
+        uint32_t entId = qr->list[i];
+        if ( ecs_has(entId, CID_Vertical) ) continue;
+        
+        ECS_GET_NEW(pos, entId, Position);
+        if( !IsPositionInPit(*pos) ) continue;
+        
+        VerticalComponent vert = { 0, 0 };
+        ecs_add(entId, CID_Vertical, &vert);
+    }
+}
+
+void System_DropOnGround(float deltaTime)
+{
+    bool onTheGround = true;
+    
+    uint32_t i;
+    QueryResult *qr = ecs_query(2, CID_Position, CID_Vertical);
+    for (i = 0; i < qr->count; ++i) {
+        uint32_t entId = qr->list[i];
+        ECS_GET_NEW(vert, entId, Vertical);
+        
+        //if crossing plane z=0
+        if (
+            vert->zpos > 0
+            && vert->zvel < 0
+            && vert->zpos < -vert->zvel * deltaTime
+        ) {
+            ECS_GET_NEW(pos, entId, Position);
+            onTheGround = !IsPositionInPit(*pos);
+            if (!onTheGround) continue;
+            vert->zpos = 0;
+            vert->zvel = 0;
+            ecs_remove(entId, CID_Vertical);
+        }
+    }
+}
+
+void System_MoveVertical(float deltaTime)
+{
+    const float gravity = 16 * 6.f;
+    uint32_t i;
+    QueryResult *qr = ecs_query(1, CID_Vertical);
+    for (i = 0; i < qr->count; ++i) {
+        ECS_GET_NEW(vert, qr->list[i], Vertical);
+        vert->zpos += vert->zvel * deltaTime;
+        vert->zvel -= gravity * deltaTime;
+    }
+}
+
+void System_FallOutOfMap()
+{
+    uint32_t i;
+    QueryResult *qr = ecs_query(1, CID_Vertical);
+    for (i = 0; i < qr->count; ++i) {
+        uint32_t entId = qr->list[i];
+        ECS_GET_NEW(vert, entId, Vertical);
+        if (vert->zpos > -16 * 1.5f) continue;
+        
+        vert->zpos = 1;
+        
+        if( ecs_has(entId, CID_Health) ) {
+            ECS_GET_NEW(hp, entId, Health);
+            hp->hp -= 16;
+        }
+        
+        ECS_GET_NEW(pos, entId, Position);
+        Vector2 newPos = *pos;
+        if( ecs_has(entId, CID_Velocity) ) {
+            ECS_GET_NEW(vel, entId, Velocity);
+            Vector2 dPos = Vector2Scale(*vel, 0.25f);
+            for(int j = -1; j < 10; j++) {
+                newPos = Vector2Subtract(newPos, dPos);
+                if( j >=0 && !IsPositionInPit(newPos) ) break;
+            }
+        }
+        if( IsPositionInPit(newPos) ) newPos = (Vector2) { 32, 32 };
+        *pos = newPos;
+    }
+}
+
+void Systems_VerticalMovement(float deltaTime)
+{
+    System_FallOnGravity();
+    System_DropOnGround(deltaTime);
+    System_MoveVertical(deltaTime);
+    System_FallOutOfMap();
+}
 
 void System_DealDamageNew(float delta)
 {
@@ -302,6 +437,7 @@ void System_PlayerInput()
         
         context.entityId = playerEntId;
         
+        bool isFalling = ecs_has(playerEntId, CID_Vertical);
         //PlayerIdComponent playerId = * (PlayerIdComponent*)ecs_get(playerEntId, CID_PlayerId);
         
         walkInput = Vector2Zero();
@@ -317,8 +453,15 @@ void System_PlayerInput()
             Vector2Normalize(walkInput),
             stats->velocity
         );
-        ecs_add(playerEntId, CID_Velocity, &walkInput);
         
+        if ( !isFalling ) {
+            ecs_add(playerEntId, CID_Velocity, &walkInput);
+        }
+        
+        if (!isFalling && IsKeyDown(KEY_SPACE)) {
+            VerticalComponent vert = { 0, 16 * 2 };
+            ecs_add(playerEntId, CID_Vertical, &vert);
+        }
         
         PositionComponent* playerPos = (PositionComponent*)ecs_get(playerEntId, CID_Position);
         
@@ -622,14 +765,25 @@ void System_DrawPlayer()
         uint32_t playerEntId = qr->list[i];
         
         PositionComponent* playerPos = (PositionComponent*)ecs_get(playerEntId, CID_Position);
+        Vector2 pos = *playerPos;
+        Vector2 dz = Vector2Zero();
         
-        Vector2 aimTo = GetScreenToWorld2D(GetMousePosition(), *(g_screenSettings.camera));
-        Vector2 aimFrom = Vector2Add (*playerPos, aimFromOffset);
+        if ( ecs_has(playerEntId, CID_Vertical) ) {
+            ECS_GET_NEW(vert, playerEntId, Vertical);
+            dz.y -= vert->zpos;
+            pos = Vector2Add(pos, dz);
+        }
+        
+        Vector2 aimTo = GetScreenToWorld2D(
+            Vector2Add( GetMousePosition(), dz ),
+            *(g_screenSettings.camera)
+        );
+        Vector2 aimFrom = Vector2Add (pos, aimFromOffset);
         
         aimDirection = Vector2Subtract(aimTo, aimFrom);
         aimDirection = Vector2Normalize(aimDirection);
         
-        DrawCharacter(*playerPos, playerSize);
+        DrawCharacter(pos, playerSize);
         DrawGun(aimFrom, aimDirection);
     }
 }
@@ -638,6 +792,7 @@ void System_DrawEnemyHP()
 {
     Vector2 offset = { 0, 3 };
     Vector2 right = { 1, 0 };
+    
     uint32_t i;
     QueryResult *qr = ecs_query(3, CID_Position, CID_Health, CID_HasHpBar);
     for (i = 0; i < qr->count; ++i) {
@@ -771,12 +926,13 @@ void Systems_GameLoop()
     float delta = GetFrameTime();
         
     System_Move(delta);
+    Systems_VerticalMovement(delta);
     System_ClearCollisions();
     System_Collide(delta);
     
     System_UpdateAttackCooldown(delta);
     System_EvaluateAiAttack();
-    System_PlayerInput();
+    System_PlayerInput(delta);
     System_PerformAttack();
     System_DealDamageNew(delta);
     System_EnemyWanderer(delta);
@@ -915,7 +1071,7 @@ int main ()
         BeginDrawing();
         
         // Setup the back buffer for drawing (clear color and depth buffers)
-        ClearBackground(BLACK);
+        ClearBackground(BACKGROUND_COLOR);
         
         ECS_GET_NEW(playerPos, player.id, Position);
         camera->target = *playerPos;
@@ -923,7 +1079,6 @@ int main ()
         Systems_DrawLoop();
         EndMode2D();
         
-        camera->zoom = screenScale;
         camera->target = centerScreenOffset;
         BeginMode2D(*camera);
         Systems_DrawUILoop();
@@ -1020,7 +1175,7 @@ int test_main()
         BeginDrawing();
 
         // Setup the back buffer for drawing (clear color and depth buffers)
-        ClearBackground(BLACK);
+        ClearBackground(BACKGROUND_COLOR);
 
         Systems_DrawLoop();
         Systems_DrawUILoop();

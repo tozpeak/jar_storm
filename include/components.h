@@ -18,6 +18,10 @@ enum DamageFlagOptions
 
 typedef Vector2 PositionComponent;
 typedef Vector2 VelocityComponent;
+typedef struct {
+    float zpos;
+    float zvel;
+} VerticalComponent;
 
 typedef struct
 {
@@ -76,6 +80,7 @@ enum ComponentId
 {
     CID_Position = 0,
     CID_Velocity,
+    CID_Vertical,
     CID_Collider, //defined in physics.h
     CID_HasCollisions, //defined in physics.h
     CID_DrawShape, //defined in shapes.h
@@ -99,6 +104,7 @@ enum ComponentId
     CID_StateFlags,
     
     CID_HasHpBar,
+    CID_HasGravity,
     CID_IsKilled,
     CID_IsWanderer,
     CID_AiAttack,

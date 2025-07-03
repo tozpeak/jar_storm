@@ -10,6 +10,7 @@ void InitComponents()
     ecs_init(CID_Count, 
         sizeof(PositionComponent), 
         sizeof(VelocityComponent), 
+        sizeof(VerticalComponent), 
         sizeof(ColliderComponent), 
         sizeof(HasCollisionsComponent), 
         sizeof(DrawShapeComponent),
@@ -33,6 +34,7 @@ void InitComponents()
         sizeof(StateFlagsComponent),
         
         0, //CID_HasHpBar
+        0, //CID_HasGravity
         0, //CID_IsKilled
         0, //CID_IsWanderer
         0, //CID_AiAttack
