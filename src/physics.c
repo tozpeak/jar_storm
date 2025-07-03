@@ -46,63 +46,63 @@ void InitPhysics()
 void System_Collide(float deltaTime)
 {
     uint32_t i, j;
-	QueryResult *qr = ecs_query(2, CID_Position, CID_Collider);
-	uint32_t* list = qr->list;
-	for (i = 0; i < qr->count; ++i) {
-	    uint32_t ent = list[i];
-		PositionComponent *pos = (PositionComponent*)ecs_get(ent, CID_Position);
-		ColliderComponent *col = (ColliderComponent*)ecs_get(ent, CID_Collider);
-		Layer layerMask = g_layerMask[col->layer];
-		
-		for (j = i+1; j < qr->count; ++j) {
-	        uint32_t entB = list[j];
-		    ColliderComponent *colB = (ColliderComponent*)ecs_get(entB, CID_Collider);
-		    
-		    if( !(MASK(colB->layer) & layerMask) ) continue;
-		    
-		    //do not support pixel colliders
-		    if (col->shape.type == SHP_PIXEL || colB->shape.type == SHP_PIXEL) continue;
-		    
-		    PositionComponent *posB = (PositionComponent*)ecs_get(entB, CID_Position);
-		    bool hasCollision = false;
-		    
-		    switch (col->shape.type)
-		    {
-	        case SHP_CIRCLE:	            
-		        switch (colB->shape.type)
-		        {
-	            case SHP_CIRCLE:
-	                hasCollision = Collision_Circle2Circle( pos, posB, &(col->shape.circle), &(colB->shape.circle) );
-	                break;
-	            case SHP_LINE:
-	                hasCollision = Collision_Circle2Line( pos, posB, &(col->shape.circle), &(colB->shape.line) );
-	                break;
-		        }
-	            break;
-	        case SHP_LINE:
-		        switch (colB->shape.type)
-		        {
-	            case SHP_CIRCLE:
-	                hasCollision = Collision_Circle2Line( posB, pos, &(colB->shape.circle), &(col->shape.line) );
-	                break;
-	            case SHP_LINE:
-	                hasCollision = Collision_Line2Line( pos, posB, &(col->shape.line), &(colB->shape.line) );
-	                break;
-		        }
-	            break;
-		    }
-		    
-		    if (!hasCollision) continue;
-		    
-		    uint32_t collisionId = NewCollision();
-		    CollisionData* collision = &( state.data[collisionId] );
-		    collision->entityA = ent;
-		    collision->entityB = entB;
-		    
-		    AddCollisionToEntity(ent, entB, collisionId);
-		    AddCollisionToEntity(entB, ent, collisionId);
-		}
-	}
+    QueryResult *qr = ecs_query(2, CID_Position, CID_Collider);
+    uint32_t* list = qr->list;
+    for (i = 0; i < qr->count; ++i) {
+        uint32_t ent = list[i];
+        PositionComponent *pos = (PositionComponent*)ecs_get(ent, CID_Position);
+        ColliderComponent *col = (ColliderComponent*)ecs_get(ent, CID_Collider);
+        Layer layerMask = g_layerMask[col->layer];
+        
+        for (j = i+1; j < qr->count; ++j) {
+            uint32_t entB = list[j];
+            ColliderComponent *colB = (ColliderComponent*)ecs_get(entB, CID_Collider);
+            
+            if( !(MASK(colB->layer) & layerMask) ) continue;
+            
+            //do not support pixel colliders
+            if (col->shape.type == SHP_PIXEL || colB->shape.type == SHP_PIXEL) continue;
+            
+            PositionComponent *posB = (PositionComponent*)ecs_get(entB, CID_Position);
+            bool hasCollision = false;
+            
+            switch (col->shape.type)
+            {
+            case SHP_CIRCLE:                
+                switch (colB->shape.type)
+                {
+                case SHP_CIRCLE:
+                    hasCollision = Collision_Circle2Circle( pos, posB, &(col->shape.circle), &(colB->shape.circle) );
+                    break;
+                case SHP_LINE:
+                    hasCollision = Collision_Circle2Line( pos, posB, &(col->shape.circle), &(colB->shape.line) );
+                    break;
+                }
+                break;
+            case SHP_LINE:
+                switch (colB->shape.type)
+                {
+                case SHP_CIRCLE:
+                    hasCollision = Collision_Circle2Line( posB, pos, &(colB->shape.circle), &(col->shape.line) );
+                    break;
+                case SHP_LINE:
+                    hasCollision = Collision_Line2Line( pos, posB, &(col->shape.line), &(colB->shape.line) );
+                    break;
+                }
+                break;
+            }
+            
+            if (!hasCollision) continue;
+            
+            uint32_t collisionId = NewCollision();
+            CollisionData* collision = &( state.data[collisionId] );
+            collision->entityA = ent;
+            collision->entityB = entB;
+            
+            AddCollisionToEntity(ent, entB, collisionId);
+            AddCollisionToEntity(entB, ent, collisionId);
+        }
+    }
 }
 
 void System_ClearCollisions() 
@@ -110,10 +110,10 @@ void System_ClearCollisions()
     state.count = 0; //clear all collision info from previous frame
 
     uint32_t i;
-	QueryResult *qr = ecs_query(1, CID_HasCollisions);
-	for (i = 0; i < qr->count; ++i) {
-		ecs_remove(qr->list[i], CID_HasCollisions);
-	}
+    QueryResult *qr = ecs_query(1, CID_HasCollisions);
+    for (i = 0; i < qr->count; ++i) {
+        ecs_remove(qr->list[i], CID_HasCollisions);
+    }
 }
 
 void InitCollisionIterator(CollisionIterator* iterator, uint32_t entityId)
@@ -195,8 +195,8 @@ int NewCollision()
     if (state.count >= state.cap) {
         CollisionData* newData = realloc(state.data, state.cap * 2 * sizeof(CollisionData));
         if (newData == NULL) {
-			printf("Realloc fail %s:%d\n", __FILE__, __LINE__);
-			exit(1);
+            printf("Realloc fail %s:%d\n", __FILE__, __LINE__);
+            exit(1);
         }
         
         state.data = newData;
