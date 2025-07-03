@@ -12,60 +12,11 @@
 #include <shapes.h>
 #include <spawners.h>
 #include <interactions.h>
+#include <level.h>
 #include <helpers.h>
 #include <ecs_helpers.h>
 
 #define BACKGROUND_COLOR BLACK
-
-typedef struct
-{
-    int width;
-    int height;
-    Vector2 tileSize;
-    int marginTiles;
-    int marginTopTiles;
-    int levelScale;
-    Camera2D *camera;
-} ScreenSettings;
-
-Camera2D mainCamera = { 0 };
-const ScreenSettings g_screenSettings = { 
-    .width = 640, 
-    .height = 480,
-    .tileSize = { 16, 16 },
-    .marginTiles = 0,
-    .marginTopTiles = 0,
-    .levelScale = 2,
-    .camera = &mainCamera,
- };
-
-bool IsTilePit(int x, int y)
-{
-    if (x < 0) return true;
-    if (x >= (g_screenSettings.width / g_screenSettings.tileSize.x) * g_screenSettings.levelScale) return true;
-    if (y < 0) return true;
-    if (y >= (g_screenSettings.height / g_screenSettings.tileSize.y) * g_screenSettings.levelScale) return true;
-    
-    if (
-        ((x % 32) >= 30) 
-        && ((y % 12) < 10)
-    ) return true;
-        
-    if (
-        ((y % 32) >= 30) 
-        && ((x % 12) < 10)
-    ) return true;
-    
-    return false;
-}
-
-bool IsPositionInPit(Vector2 position)
-{
-    return IsTilePit(
-        (int)floor(position.x / g_screenSettings.tileSize.x),
-        (int)floor(position.y / g_screenSettings.tileSize.y)
-    );
-}
 
 void DrawChessboard() 
 {
