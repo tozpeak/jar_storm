@@ -20,24 +20,12 @@
 
 void DrawChessboard() 
 {
-    int screenX = g_screenSettings.width * g_screenSettings.levelScale,
-        screenY = g_screenSettings.height * g_screenSettings.levelScale;
-    Vector2 tileSize = g_screenSettings.tileSize;
-    int offsetTiles = g_screenSettings.marginTiles;
-    int offsetTopTiles = g_screenSettings.marginTopTiles;
+    Vector2 tileSize = g_level.tileSize;
     Color tileColor = DARKGRAY;
     
-    /*DrawRectangle(
-        offsetTiles * tileSize.x,
-        offsetTopTiles * tileSize.y,
-        screenX - ( offsetTiles * 2 ) * tileSize.x,
-        screenY - ( offsetTiles + offsetTopTiles ) * tileSize.y,
-        GRAY
-    );*/
-    
-    for (int i = offsetTiles; (i + offsetTiles) * tileSize.x < screenX; i++) 
+    for (int i = 0; i < g_level.width; i++) 
     {
-        for (int j = offsetTopTiles; (j + offsetTiles - 1) * tileSize.y < screenY; j++) 
+        for (int j = 0; j <= g_level.height; j++) 
         {
             tileColor = ((i + j)%2 == 0) ? GRAY : DARKGRAY;
             bool isPit = IsTilePit(i, j);
@@ -245,17 +233,19 @@ void System_DealDamageNew(float delta)
 
 void System_KeepWandererInBounds()
 {
-    Vector2 tileSize = g_screenSettings.tileSize;
+    Vector2 tileSize = g_level.tileSize;
+    
+    float boundsMarginTiles = 0.5f;
     
     Rectangle levelBounds = {
-        tileSize.x * g_screenSettings.marginTiles,
-        tileSize.y * g_screenSettings.marginTopTiles,
-        g_screenSettings.width * g_screenSettings.levelScale - tileSize.x * (g_screenSettings.marginTiles * 2),
-        g_screenSettings.height * g_screenSettings.levelScale - tileSize.y * (g_screenSettings.marginTiles + g_screenSettings.marginTopTiles),
+        boundsMarginTiles * tileSize.x,
+        boundsMarginTiles * tileSize.y,
+        (g_level.width  - 2*boundsMarginTiles) * tileSize.x,
+        (g_level.height - 2*boundsMarginTiles) * tileSize.y,
     };
     Vector2 levelCenter = {
-        g_screenSettings.width / 2,
-        g_screenSettings.height / 2,
+        levelBounds.width / 2,
+        levelBounds.height / 2,
     };
     VelocityComponent newVel;
     
@@ -485,8 +475,8 @@ void System_SpawnRandomUnit(float deltaTime)
     
     int spawnMargin = 16 * 4;
     
-    int levelSizeX = g_screenSettings.width * g_screenSettings.levelScale,
-        levelSizeY = g_screenSettings.height * g_screenSettings.levelScale;
+    int levelSizeX = g_level.width * g_level.tileSize.x,
+        levelSizeY = g_level.height * g_level.tileSize.y;
         
     float spawnRadius = 16 * 12;
     
@@ -768,14 +758,11 @@ void System_DrawEnemyHP()
 
 void System_DrawHUD_HeaderBackground()
 {
-    int boundsX = g_screenSettings.width * g_screenSettings.levelScale,
-        boundsY = g_screenSettings.height * g_screenSettings.levelScale;
-    
     DrawRectangle(
         0,
         0,
         g_screenSettings.width,
-        2 * g_screenSettings.tileSize.y,
+        2 * g_level.tileSize.y,
         (Color) { 0, 0, 0, 198 }
     );
 }
@@ -854,8 +841,8 @@ bool System_DebugPause()
 
 void System_KillOutOfBounds() 
 {
-    int boundsX = g_screenSettings.width * g_screenSettings.levelScale,
-        boundsY = g_screenSettings.height * g_screenSettings.levelScale;
+    int boundsX = g_level.width * g_level.tileSize.x,
+        boundsY = g_level.height * g_level.tileSize.y;
     
     uint32_t i;
     QueryResult *qr = ecs_query(1, CID_Position);
@@ -926,20 +913,18 @@ void Systems_DrawUILoop()
 
 void GenerateLevel()
 {
-    int pillarCount = 6 * g_screenSettings.levelScale * g_screenSettings.levelScale;
+    int pillarCount = 6 * 4;
     int interactableCount = 48;
 
-    int screenX = g_screenSettings.width * g_screenSettings.levelScale,
-        screenY = g_screenSettings.height * g_screenSettings.levelScale;
-    Vector2 tileSize = g_screenSettings.tileSize;
+    Vector2 tileSize = g_level.tileSize;
     Rectangle levelRect = {
-        g_screenSettings.marginTiles * tileSize.x,
-        g_screenSettings.marginTopTiles * tileSize.y,
-        screenX - ( g_screenSettings.marginTiles * 2 ) * tileSize.x,
-        screenY - ( g_screenSettings.marginTiles + g_screenSettings.marginTopTiles ) * tileSize.y,
+        0,
+        0,
+        g_level.width * tileSize.x,
+        g_level.height * tileSize.y,
     };
 
-    Spawn_Teleporter((Vector2) { screenX - 32, screenY - 32 } );
+    Spawn_Teleporter((Vector2) { levelRect.width - 32, levelRect.height - 32 } );
     //Spawn_RandomItem((Vector2) { 256, 256 } );
     
     for (int i = 0; i < pillarCount; i++) {
