@@ -171,11 +171,11 @@ void System_DropOnGround(float deltaTime)
         uint32_t entId = qr->list[i];
         DynamicVector3 *pos = (DynamicVector3*)ecs_get(entId, CID_Position);
         DynamicVector3 *vel = (DynamicVector3*)ecs_get(entId, CID_Velocity);
-        //if crossing plane z=0
+        float prevPosZ = pos->z - (vel->z * deltaTime);
+        //if crossed plane z=0
         if (
-            pos->z > 0
-            && vel->z < 0
-            && pos->z < -vel->z * deltaTime
+            pos->z < 0
+            && prevPosZ > 0
         ) {
             onTheGround = !IsPositionInPit(*(DynamicVector2*)pos);
             if (!onTheGround) continue;
