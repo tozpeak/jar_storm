@@ -73,9 +73,10 @@ C99 was chosen as an old standard, which is still in use. To better understand t
 ## Physics
 
 - [ ] collision point
-- [ ] collision depth
-- [ ] collision normal
+- [x] collision depth
+- [x] collision normal
 - [ ] rigidbody system
+    - [x] prototype (good enough?)
 
 ## ECS
 

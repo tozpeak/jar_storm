@@ -24,6 +24,8 @@ enum LayerName
 typedef struct {
     int entityA;
     int entityB;
+    float depth;
+    Vector2 normalA;
     //char flags;
 } CollisionData;
 
@@ -45,6 +47,7 @@ typedef struct
     HasCollisionsComponent *hasCollisions;
     uint32_t lastIndex;
     uint32_t other;
+    Vector2 normal;
     CollisionData *collisionData;
 } CollisionIterator;
 
@@ -55,6 +58,7 @@ extern Layer g_layerMask[];
 //void IntersectLayers(Layer a, Layer b);
 void InitPhysics();
 void System_Collide(float deltaTime);
+void System_PushRigidbodyFromStatic();
 void System_ClearCollisions();
 
 /* Usage example:

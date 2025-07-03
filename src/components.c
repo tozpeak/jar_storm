@@ -32,6 +32,8 @@ void InitComponents()
         
         sizeof(StateFlagsComponent),
         
+        0, //CID_StaticCollider
+        0, //CID_Rigidbody
         0, //CID_HasHpBar
         0, //CID_HasGravity
         0, //CID_IsKilled

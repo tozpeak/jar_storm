@@ -881,6 +881,7 @@ void Systems_GameLoop()
     Systems_VerticalMovement(delta);
     System_ClearCollisions();
     System_Collide(delta);
+    System_PushRigidbodyFromStatic();
     
     System_UpdateAttackCooldown(delta);
     System_EvaluateAiAttack();
@@ -925,7 +926,7 @@ void Systems_DrawUILoop()
 
 void GenerateLevel()
 {
-    int pillarCount = 20 * g_screenSettings.levelScale * g_screenSettings.levelScale;
+    int pillarCount = 6 * g_screenSettings.levelScale * g_screenSettings.levelScale;
     int interactableCount = 48;
 
     int screenX = g_screenSettings.width * g_screenSettings.levelScale,

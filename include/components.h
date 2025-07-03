@@ -109,6 +109,8 @@ enum ComponentId
     
     CID_StateFlags,
     
+    CID_StaticCollider,
+    CID_Rigidbody,
     CID_HasHpBar,
     CID_HasGravity,
     CID_IsFalling,

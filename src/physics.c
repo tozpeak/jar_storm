@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <raylib.h>
 #include <ecs.h>
+#include <ecs_helpers.h>
 
 #include <components.h>
 #include <physics.h>
@@ -31,7 +32,7 @@ void AddCollisionToEntity(
     uint32_t collisionId
 );
 
-bool Collision_Circle2Circle(PositionComponent* pos1, PositionComponent* pos2, ShapeCircle *circle1, ShapeCircle *circle2);
+bool Collision_Circle2Circle(PositionComponent* pos1, PositionComponent* pos2, ShapeCircle *circle1, ShapeCircle *circle2, CollisionData *collision);
 bool Collision_Circle2Line(PositionComponent* pos1, PositionComponent* pos2, ShapeCircle *circle1, ShapeLine *line2);
 bool Collision_Line2Line(PositionComponent* pos1, PositionComponent* pos2, ShapeLine *line1, ShapeLine *line2);
 
@@ -65,6 +66,7 @@ void System_Collide(float deltaTime)
             
             PositionComponent *posB = (PositionComponent*)ecs_get(entB, CID_Position);
             bool hasCollision = false;
+            CollisionData newCollision = { 0 };
             
             switch (col->shape.type)
             {
@@ -72,7 +74,7 @@ void System_Collide(float deltaTime)
                 switch (colB->shape.type)
                 {
                 case SHP_CIRCLE:
-                    hasCollision = Collision_Circle2Circle( pos, posB, &(col->shape.circle), &(colB->shape.circle) );
+                    hasCollision = Collision_Circle2Circle( pos, posB, &(col->shape.circle), &(colB->shape.circle), &newCollision );
                     break;
                 case SHP_LINE:
                     hasCollision = Collision_Circle2Line( pos, posB, &(col->shape.circle), &(colB->shape.line) );
@@ -96,11 +98,37 @@ void System_Collide(float deltaTime)
             
             uint32_t collisionId = NewCollision();
             CollisionData* collision = &( state.data[collisionId] );
-            collision->entityA = ent;
-            collision->entityB = entB;
+            newCollision.entityA = ent;
+            newCollision.entityB = entB;
+            *collision = newCollision;
             
             AddCollisionToEntity(ent, entB, collisionId);
             AddCollisionToEntity(entB, ent, collisionId);
+        }
+    }
+}
+
+void System_PushRigidbodyFromStatic()
+{
+    uint32_t i;
+    QueryResult *qr = ecs_query(2, CID_HasCollisions, CID_StaticCollider);
+    for (i = 0; i < qr->count; ++i) {
+        CollisionIterator iterator = { 0 };
+        InitCollisionIterator(&iterator, qr->list[i]);
+        while (TryGetNextCollision(&iterator)) {
+            uint32_t entB = iterator.other;
+            if( !ecs_has(entB, CID_Rigidbody) ) continue;
+            if( ecs_has(entB, CID_StaticCollider) ) continue;
+            
+            CollisionData* cData = iterator.collisionData;
+            if ( cData->depth <= 0 ) continue;
+            
+            Vector2 normal = iterator.normal;
+            ECS_GET_NEW(pos, entB, Position);
+            *pos = Vector2Add(
+                *pos,
+                Vector2Scale(normal, cData->depth)
+            );
         }
     }
 }
@@ -148,12 +176,14 @@ bool TryGetNextCollision(
         
         if (state.data[i].entityA == iterator->entityId) {
             iterator->other = state.data[i].entityB;
+            iterator->normal = state.data[i].normalA;
             iterator->collisionData = &(state.data[i]);
             iterator->lastIndex = i+1;
             return true;
         }
         if (state.data[i].entityB == iterator->entityId) {
             iterator->other = state.data[i].entityA;
+            iterator->normal = Vector2Negate( state.data[i].normalA );
             iterator->collisionData = &(state.data[i]);
             iterator->lastIndex = i+1;
             return true;
@@ -225,11 +255,18 @@ void AddCollisionToEntity(
 }
 
 
-bool Collision_Circle2Circle(PositionComponent* pos1, PositionComponent* pos2, ShapeCircle *circle1, ShapeCircle *circle2)
+bool Collision_Circle2Circle(PositionComponent* pos1, PositionComponent* pos2, ShapeCircle *circle1, ShapeCircle *circle2, CollisionData *collision)
 {
-    float distSqr = Vector2DistanceSqr(*pos1, *pos2);
+    Vector2 delta = Vector2Subtract(*pos2, *pos1);
+    float distSqr = Vector2LengthSqr(delta);
     float minDist = circle1->radius + circle2->radius;
-    return (distSqr < minDist * minDist);
+    bool result = (distSqr < minDist * minDist);
+    if (!result) return false;
+    
+    collision->depth = minDist - sqrt(distSqr);
+    collision->normalA = Vector2Normalize(delta);
+    
+    return result;
 }
 
 bool Collision_Circle2Line(PositionComponent* pos1, PositionComponent* pos2, ShapeCircle *circle1, ShapeLine *line2)
