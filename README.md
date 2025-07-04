@@ -134,7 +134,4 @@ Since it is a realtime game, sorting the entities or a drawing queue would be qu
 Sadly, Raylib 5.5 does not allow us to use z-buffer in 2d mode, which could solve our problem by not overdrawing closer objects.
 Best solution so far would be to switch to 2.5d mode, drawing sprites as 3d objects facing the camera. If the performance would be not good, the custom shader could be used to eliminate unnecessary transformations on gpu.
 
-## Pits and Jumps
 
-Should generate new objects (monsters, chests, columns) only on open space.
-Count on pits when deciding where the AI movement goes.

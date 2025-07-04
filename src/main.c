@@ -10,9 +10,9 @@
 #include <components.h>
 #include <physics.h>
 #include <shapes.h>
+#include <level.h>
 #include <spawners.h>
 #include <interactions.h>
-#include <level.h>
 #include <helpers.h>
 #include <ecs_helpers.h>
 
@@ -47,6 +47,40 @@ void DrawChessboard()
                     (Color){ 40, 40, 40, 255 }
                 );
             }
+        }
+    }
+}
+
+void Draw_DebugAiDistance() 
+{
+    Vector2 tileSize = g_level.tileSize;
+    Color
+        obstacle = { 255, 0, 0, 65 },
+        empty    = { 0, 255, 0, 65 },
+        baseDist = { 255, 255, 0, 0 };
+    
+    Color tileColor;
+    
+    for (int i = 0; i < g_level.width; i++) 
+    {
+        for (int j = 0; j < g_level.height; j++) 
+        {
+            AIMapTile *tileInfo = Level_GetAITileForTilePos( (Vector2Int) { i, j } );
+            unsigned char distance = tileInfo->aiDistance;
+            if (distance < AI_DIST_EMPTY) {
+                tileColor = baseDist;
+                tileColor.a = 205 - (distance) * 10;
+            }
+            else {
+                tileColor = (distance == AI_DIST_OBSTACLE) ? obstacle : empty;
+            }
+            DrawRectangle(
+                i * tileSize.x,
+                j * tileSize.y,
+                tileSize.x,
+                tileSize.y,
+                tileColor
+            );
         }
     }
 }
@@ -270,6 +304,26 @@ void System_KeepWandererInBounds()
     }
 }
 
+void System_KeepWandererFromObstacles(float delta)
+{
+    SYSTEM_TIMER(delta, 0.1f);
+    if(timer_ticks < 1) return;
+    
+    uint32_t i;
+    QueryResult *qr = ecs_query(3, CID_Position, CID_Velocity, CID_IsWanderer);
+    for (i = 0; i < qr->count; ++i) {
+        PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
+        VelocityComponent *vel = (VelocityComponent*)ecs_get(qr->list[i], CID_Velocity);
+        
+        Vector2 posNextSecond = Vector2Add(*pos, *vel);
+        AIMapTile *tileInfo = Level_GetAITileForWorldPos(*pos);
+        
+        if ( tileInfo->aiDistance >= AI_DIST_OBSTACLE ) {
+            *vel = Vector2Negate(*vel);
+        }
+    }
+}
+
 void System_EnemyWanderer(float deltaTime)
 {
     const int CHANCE_SAMPLE_SIZE = 100000;
@@ -489,6 +543,7 @@ void System_SpawnRandomUnit(float deltaTime)
     Vector2 up = (Vector2) { 0, 1 };
     
     int iterationsAllowed = 10;
+    AIMapTile *aiTile;
     
     do {
         position = Vector2Add(
@@ -502,12 +557,9 @@ void System_SpawnRandomUnit(float deltaTime)
         
         if (iterationsAllowed <= 0) return;
         
-    } while (
-        position.x < spawnMargin
-        || position.x > (levelSizeX - spawnMargin)
-        || position.y < spawnMargin
-        || position.y > (levelSizeY - spawnMargin)
-    );
+        aiTile = Level_GetAITileForWorldPos(position);
+        
+    } while ( aiTile->aiDistance > AI_DIST_EMPTY );
     
     
     
@@ -876,7 +928,7 @@ void Systems_GameLoop()
     System_PerformAttack();
     System_DealDamageNew(delta);
     System_EnemyWanderer(delta);
-    System_KeepWandererInBounds();
+    System_KeepWandererFromObstacles(delta);
     System_SpawnRandomUnit(delta);
     
     System_PickItem();
@@ -900,6 +952,7 @@ void Systems_DrawLoop()
     Systems_DrawInteractions();
 
     System_DrawDebugCollisions();
+    //Draw_DebugAiDistance();
 
     System_DrawEnemyHP();
 }
@@ -911,47 +964,12 @@ void Systems_DrawUILoop()
     System_DrawHUD_Items();
 }
 
-void GenerateLevel()
-{
-    int pillarCount = 6 * 4;
-    int interactableCount = 48;
-
-    Vector2 tileSize = g_level.tileSize;
-    Rectangle levelRect = {
-        0,
-        0,
-        g_level.width * tileSize.x,
-        g_level.height * tileSize.y,
-    };
-
-    Spawn_Teleporter((Vector2) { levelRect.width - 32, levelRect.height - 32 } );
-    //Spawn_RandomItem((Vector2) { 256, 256 } );
-    
-    for (int i = 0; i < pillarCount; i++) {
-        Spawn_Pillar( (Vector2) {
-            rand() % (int)round(levelRect.width) + levelRect.x,
-            rand() % (int)round(levelRect.height) + levelRect.y,
-        } );
-    }
-    
-    for (int i = 0; i < interactableCount; i++) {
-        Spawn_Interactable((Vector2) {
-            rand() % (int)round(levelRect.width) + levelRect.x,
-            rand() % (int)round(levelRect.height) + levelRect.y,
-        } );
-    }
-    
-    /*for (int i = 0; i < 4; i++) {
-        Spawn_Interactable( (Vector2) { 96 + i * 4, 96 } );
-    }*/
-}
-
 int test_main();
 
 int test_limits()
 {
-    if (CID_Count >= 32) {
-        printf( "CID_Count is %d >= 32!\n"
+    if (CID_Count > 32) {
+        printf( "CID_Count is %d > 32!\n"
                 "Move flag components to separate bitmask or make the current mask bigger.\n"
                 , CID_Count);
         return 1;
@@ -996,7 +1014,7 @@ int main ()
         0
     );
     
-    GenerateLevel();
+    Level_Generate();
     
     //SpawnEntireFieldOfEnemies();
 

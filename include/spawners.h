@@ -3,6 +3,9 @@
 #include <raymath.h>
 #include <ecs.h>
 
+#include <physics.h>
+#include <attacks.h>
+#include <shapes.h>
 
 Entity Spawn_Projectile(
     Vector2 projPosition, 
