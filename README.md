@@ -42,10 +42,10 @@ C99 was chosen as an old standard, which is still in use. To better understand t
 
 ## Enemy Behaviour
 
-- [ ] make structure for flow field calculation,
-- [ ] make components for more interesting enemy behaviour:
+- [x] make structure for flow field calculation,
+- [x] make components for more interesting enemy behaviour:
     - [x] attack abilities,
-    - [ ] targeted movement,
+    - [x] targeted movement,
 - [ ] FSM or behaviour trees
 
 ## Levels & Progression
@@ -61,7 +61,7 @@ C99 was chosen as an old standard, which is still in use. To better understand t
 - [ ] boss enemies
 - [ ] pits + jump/fly systems
     - [x] prototype
-    - [ ] cleanup code
+    - [x] cleanup code
     - [ ] bugfix
 
 ## Main Menu
@@ -134,4 +134,8 @@ Since it is a realtime game, sorting the entities or a drawing queue would be qu
 Sadly, Raylib 5.5 does not allow us to use z-buffer in 2d mode, which could solve our problem by not overdrawing closer objects.
 Best solution so far would be to switch to 2.5d mode, drawing sprites as 3d objects facing the camera. If the performance would be not good, the custom shader could be used to eliminate unnecessary transformations on gpu.
 
+## AI Pathfinding
 
+Pathfinding is implemented with caching distance map. With this structure Pathfinder only needs to check 8 neigboured tiles with own tile to decide where it should go.
+While this structure is made in BFS filling in mind, currently it just fills empty tiles with circle distances, ignoring that obstacles can form complex path.
+However, this solution may still work, since AI doesn't need to be too smart, it just should be intimidating for the player. Range attacks still force the player to move constantly, so it could be fine. Playtest is needed to be sure.

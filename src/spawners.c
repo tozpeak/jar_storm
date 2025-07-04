@@ -170,6 +170,8 @@ uint32_t Spawn_Enemy(Vector2 position)
     };
     HealthComponent hp = { 24, 32 };
     
+    AiFollowerComponent aiFollow = { 0 };
+    
     PrimaryAttackComponent primAtt = { .attackId = ATK_ID_MELEE_BITE };
     SetAttackSpawnCooldown(&primAtt);
     
@@ -179,6 +181,7 @@ uint32_t Spawn_Enemy(Vector2 position)
     ecs_add(e.id, CID_Collider, &col );
     ecs_add(e.id, CID_Health, &hp );
     ecs_add(e.id, CID_PrimaryAttack, &primAtt );
+    ecs_add(e.id, CID_AiFollower, &aiFollow );
     ecs_add(e.id, CID_Rigidbody, NULL );
     ecs_add(e.id, CID_IsWanderer, NULL );
     ecs_add(e.id, CID_AiAttack, NULL );
@@ -196,7 +199,7 @@ uint32_t Spawn_Enemy_Lizard(Vector2 position)
     Entity e = ecs_create();
     PositionComponent pos = position;
 	VelocityComponent vel = Vector2Rotate(
-	    (Vector2) { 5, 0 },
+	    (Vector2) { 8, 0 },
 	    (rand() % 628) / 100.0f
 	);
     DrawShapeComponent shape = { VIOLET, Shapes_NewCircle(Vector2Zero(), radius) };
@@ -205,6 +208,8 @@ uint32_t Spawn_Enemy_Lizard(Vector2 position)
         (Layer)LN_ENEMY 
     };
     HealthComponent hp = { 48, 48 };
+    
+    AiFollowerComponent aiFollow = { 5 };
     
     PrimaryAttackComponent primAtt = { .attackId = ATK_ID_MELEE_CLAW };
     SecondaryAttackComponent secAtt = { .attackId = ATK_ID_SHOT_FIREBALL };
@@ -218,6 +223,7 @@ uint32_t Spawn_Enemy_Lizard(Vector2 position)
     ecs_add(e.id, CID_Health, &hp );
     ecs_add(e.id, CID_PrimaryAttack, &primAtt );
     ecs_add(e.id, CID_SecondaryAttack, &secAtt );
+    ecs_add(e.id, CID_AiFollower, &aiFollow );
     ecs_add(e.id, CID_Rigidbody, NULL );
     ecs_add(e.id, CID_IsWanderer, NULL );
     ecs_add(e.id, CID_AiAttack, NULL );

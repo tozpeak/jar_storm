@@ -70,6 +70,11 @@ typedef struct
     short amount;
 } CoinsComponent;
 
+typedef struct
+{
+    char targetDistance;
+} AiFollowerComponent;
+
 /*typedef char EventId;
 enum EventIdOptions 
 {
@@ -106,6 +111,8 @@ enum ComponentId
     CID_Coins,
     CID_TargetId,
     //CID_Event,
+    
+    CID_AiFollower,
     
     CID_StateFlags,
     

@@ -29,6 +29,7 @@ void InitComponents()
         sizeof(CoinsComponent),
         sizeof(TargetIdComponent),
         //sizeof(EventComponent),
+        sizeof(AiFollowerComponent),
         
         sizeof(StateFlagsComponent),
         

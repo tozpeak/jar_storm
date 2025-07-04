@@ -306,12 +306,15 @@ void System_KeepWandererInBounds()
 
 void System_KeepWandererFromObstacles(float delta)
 {
-    SYSTEM_TIMER(delta, 0.1f);
+    SYSTEM_TIMER(delta, 0.05f);
     if(timer_ticks < 1) return;
     
     uint32_t i;
-    QueryResult *qr = ecs_query(3, CID_Position, CID_Velocity, CID_IsWanderer);
+    QueryResult *qr = ecs_query(2, CID_Position, CID_Velocity);
     for (i = 0; i < qr->count; ++i) {
+        if( !ecs_has(qr->list[i], CID_IsWanderer)
+            && !ecs_has(qr->list[i], CID_AiFollower) ) continue;
+        
         PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
         VelocityComponent *vel = (VelocityComponent*)ecs_get(qr->list[i], CID_Velocity);
         
@@ -326,8 +329,12 @@ void System_KeepWandererFromObstacles(float delta)
 
 void System_EnemyWanderer(float deltaTime)
 {
+    float timerDuration = 0.1f;
+    SYSTEM_TIMER(deltaTime, timerDuration);
+    if(timer_ticks < 1) return;
+    
     const int CHANCE_SAMPLE_SIZE = 100000;
-    float changeDirProbabilityF = deltaTime * 1 / 5; // once in 5 seconds
+    float changeDirProbabilityF = (timer_ticks * timerDuration) * 1 / 5; // once in 5 seconds
     int changeDirProbability = round(CHANCE_SAMPLE_SIZE * changeDirProbabilityF);
     VelocityComponent newVel;
     
@@ -343,6 +350,132 @@ void System_EnemyWanderer(float deltaTime)
             (rand() % 628) / 100.0f
         );
         *vel = newVel;
+    }
+}
+
+void System_FillDistanceMap(float delta)
+{
+    SYSTEM_TIMER(delta, 0.3f);
+    if(timer_ticks < 1) return;
+    
+    const char MAX_DISTANCE = 15;
+    
+    //Set all as empty
+    AIMapTile *aiMap = g_level.aiMap;
+    AIMapTile *aiTile;
+    int i, j;
+    for (i = 0; i < g_level.width; i++) {
+        for (j = 0; j < g_level.height; j++) {
+            aiTile = aiMap + LVL_INDEX(i,j);
+            if (aiTile->aiDistance >= AI_DIST_EMPTY) continue;
+            aiTile->aiDistance = AI_DIST_EMPTY;
+        }
+    }
+    
+    //prototype:
+    //filled by circle, ai can stick to obstacles
+    //better way would be to fill with BFS
+    Vector2Int tPos, tFrom, tTo;
+    uint32_t k;
+    QueryResult *qr = ecs_query(2, CID_Position, CID_PlayerId);
+    for (k = 0; k < qr->count; ++k) {
+        uint32_t entPlayer = qr->list[k];
+        
+        ECS_GET_NEW(pos, entPlayer, Position);
+        tPos = GetTilePosition(*pos);
+        
+        //eval tFrom, tTo
+        tFrom = tPos;
+        tFrom.x -= MAX_DISTANCE; tFrom.y -= MAX_DISTANCE;
+        tTo = tPos;
+        tTo.x += MAX_DISTANCE+1; tTo.y += MAX_DISTANCE+1;
+        
+        for (i = tFrom.x; i < tTo.x; i++) {
+            if (i < 0 || i >= g_level.width) continue;
+            
+            for (j = tFrom.y; j < tTo.y; j++) {
+                if (j < 0 || j >= g_level.height) continue;
+                
+                aiTile = aiMap + LVL_INDEX(i,j);
+                if (aiTile->aiDistance >= AI_DIST_OBSTACLE) continue;
+                
+                unsigned char myDistance = (unsigned char) floor( 
+                    sqrt(
+                        (tPos.x - i)*(tPos.x - i) + (tPos.y - j)*(tPos.y - j)
+                    )
+                );
+                if (myDistance > MAX_DISTANCE) continue;
+                if (aiTile->aiDistance < myDistance) continue;
+                aiTile->aiDistance = myDistance;
+            }
+        }
+    }
+}
+
+void System_AiFollower(float delta)
+{
+    SYSTEM_TIMER(delta, 0.5f);
+    if(timer_ticks < 1) return;
+    
+    AIMapTile *aiMap = g_level.aiMap;
+    AIMapTile *aiTile;
+    Vector2Int tPos;
+    int i, j;
+    
+    uint32_t k;
+    QueryResult *qr = ecs_query(3, CID_Position, CID_Velocity, CID_AiFollower);
+    for (k = 0; k < qr->count; ++k) {
+        uint32_t ent = qr->list[k];
+        ECS_GET_NEW(pos, ent, Position);
+        ECS_GET_NEW(aiFollow, ent, AiFollower);
+        tPos = GetTilePosition(*pos);
+        
+        unsigned char targetDistance = aiFollow->targetDistance;
+        unsigned char myDistance = Level_GetAITileForTilePos(tPos)->aiDistance;
+        unsigned char bestDistance = myDistance;
+        Vector2Int bestPos = tPos;
+        
+        for (i = tPos.x-1; i <= tPos.x+1; i++) {
+            if (i < 0 || i >= g_level.width) continue;
+            
+            for (j = tPos.y-1; j <= tPos.y+1; j++) {
+                if (j < 0 || j >= g_level.height) continue;
+                
+                aiTile = aiMap + LVL_INDEX(i,j);
+                
+                if (
+                    abs (aiTile->aiDistance - targetDistance)
+                    >=
+                    abs (bestDistance - targetDistance)
+                ) continue;
+                
+                bestDistance = aiTile->aiDistance;
+                bestPos.x = i;
+                bestPos.y = j;
+            }
+        }
+        
+        if (bestDistance >= AI_DIST_EMPTY) 
+            ecs_add(ent, CID_IsWanderer, NULL);
+        else
+            ecs_remove(ent, CID_IsWanderer);
+        
+        //already in best place
+        if (myDistance == bestDistance) continue;
+        
+        Vector2 walkInput = {
+            bestPos.x - tPos.x,
+            bestPos.y - tPos.y,
+        };
+        
+        walkInput = Vector2Normalize(walkInput);
+        
+        ECS_GET_NEW(vel, ent, Velocity);
+        
+        *vel = Vector2Scale(
+            walkInput,
+            Vector2Length(*vel)
+        );
     }
 }
 
@@ -928,6 +1061,8 @@ void Systems_GameLoop()
     System_PerformAttack();
     System_DealDamageNew(delta);
     System_EnemyWanderer(delta);
+    System_FillDistanceMap(delta);
+    System_AiFollower(delta);
     System_KeepWandererFromObstacles(delta);
     System_SpawnRandomUnit(delta);
     
