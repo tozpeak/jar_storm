@@ -1083,7 +1083,7 @@ bool System_DebugPause()
 {
     static bool isPaused = false;
     
-    if(IsKeyPressed(KEY_P)) isPaused = !isPaused;
+    if(IsKeyPressed(KEY_ESCAPE)) isPaused = !isPaused;
     return isPaused;
 }
 
@@ -1197,6 +1197,7 @@ int main ()
     };
 
     InitWindow(windowSize.x, windowSize.y, "Hello Raylib");
+    SetExitKey(KEY_NULL);
     //SetWindowSize(g_screenSettings.width * screenScale, g_screenSettings.height * screenScale);
 
     Vector2 centerScreenOffset = (Vector2){ g_screenSettings.width / 2.f, g_screenSettings.height / 2.f };
