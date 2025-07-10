@@ -17,6 +17,7 @@
 #include <ecs_helpers.h>
 
 #define BACKGROUND_COLOR BLACK
+#define SHADE_UI_COLOR (Color) { 0, 0, 0, 198 }
 
 void DrawChessboard() 
 {
@@ -856,6 +857,16 @@ void System_SaveKilledPlayer()
     }
 }
 
+void System_ProcessKilledPlayer()
+{
+    uint32_t i;
+    QueryResult *qr = ecs_query(2, CID_IsKilled, CID_PlayerId);
+    for (i = 0; i < qr->count; ++i) {
+        ecs_remove(qr->list[i], CID_IsKilled);
+        ecs_remove(qr->list[i], CID_PlayerInput);
+    }
+}
+
 void System_DestroyKilled()
 {
     static DynamicVector3 zero = (Vector3) { 0 };
@@ -948,7 +959,7 @@ void System_DrawHUD_HeaderBackground()
         0,
         g_screenSettings.width,
         2 * g_level.tileSize.y,
-        (Color) { 0, 0, 0, 198 }
+        SHADE_UI_COLOR
     );
 }
 
@@ -999,6 +1010,31 @@ void System_DrawHUD_Items()
             16, DARKGREEN
         );
     }
+}
+
+void System_DrawHUD_DeathScreen()
+{
+    QueryResult *qr = ecs_query(2, CID_PlayerId, CID_PlayerInput);
+    //there are players alive
+    if (qr->count > 0) return;
+    
+    DrawRectangle(
+        0,
+        0,
+        g_screenSettings.width,
+        g_screenSettings.height,
+        SHADE_UI_COLOR
+    );
+    
+    const char *text = "YOU DIED";
+    const int textSize = 16;
+    DrawText(
+        text,
+        ( g_screenSettings.width - MeasureText(text, textSize) ) / 2,
+        ( g_screenSettings.height - textSize ) / 2,
+        textSize,
+        RED
+    );
 }
 
 void System_DrawDebugCollisions()
@@ -1072,9 +1108,10 @@ void Systems_GameLoop()
     Systems_Interactions();
     
     System_GetCoinsOnKill();
+    //System_SaveKilledPlayer();
+    System_ProcessKilledPlayer();
     
     System_KillOutOfBounds();
-    System_SaveKilledPlayer();
     System_DestroyKilled();
 }
 
@@ -1097,6 +1134,7 @@ void Systems_DrawUILoop()
     System_DrawHUD_HeaderBackground();
     System_DrawHUD_Coins();
     System_DrawHUD_Items();
+    System_DrawHUD_DeathScreen();
 }
 
 int test_main();
