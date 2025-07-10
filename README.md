@@ -4,6 +4,10 @@ The project is started as a playground to learn C99.
 Also to showcase my skills at learning and gained skills in C/C++.
 C99 was chosen as an old standard, which is still in use. To better understand the core principles of modern C/C++ development I've decided to get a proper foundation. It's often easier to understand modern tools after working with older generation.
 
+# Disclaimer (!)
+
+This project **DOES NOT** have a free license, thus it is **READ ONLY**. Feel free to learn from my experience, but do not copy it and definetely do not present it to someone else as your own.
+
 # TODO
 
 ## Generic
