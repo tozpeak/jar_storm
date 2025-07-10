@@ -864,6 +864,7 @@ void System_ProcessKilledPlayer()
     for (i = 0; i < qr->count; ++i) {
         ecs_remove(qr->list[i], CID_IsKilled);
         ecs_remove(qr->list[i], CID_PlayerInput);
+        ecs_remove(qr->list[i], CID_Velocity);
     }
 }
 
@@ -1026,15 +1027,41 @@ void System_DrawHUD_DeathScreen()
         SHADE_UI_COLOR
     );
     
-    const char *text = "YOU DIED";
     const int textSize = 16;
+    int posVertical = ( g_screenSettings.height - textSize ) / 2;
+    
+    const char *text = "YOU DIED";
     DrawText(
         text,
         ( g_screenSettings.width - MeasureText(text, textSize) ) / 2,
-        ( g_screenSettings.height - textSize ) / 2,
+        posVertical,
         textSize,
         RED
     );
+    posVertical += textSize;
+    
+    const char *text2 = "[Press ENTER to RESSURECT]";
+    DrawText(
+        text2,
+        ( g_screenSettings.width - MeasureText(text2, textSize) ) / 2,
+        posVertical,
+        textSize,
+        GRAY
+    );
+    posVertical += textSize;
+    
+    if( IsKeyPressed(KEY_ENTER) ) {
+        qr = ecs_query(1, CID_PlayerId);
+        uint32_t i;
+        for (i = 0; i < qr->count; ++i) {
+            uint32_t playerEnt = qr->list[i];
+            
+            ECS_GET_NEW(hp, playerEnt, Health);
+            hp->hp = hp->maxHp;
+            
+            ecs_add(playerEnt, CID_PlayerInput, NULL);
+        }
+    }
 }
 
 void System_DrawDebugCollisions()
