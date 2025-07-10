@@ -16,6 +16,16 @@ C99 was chosen as an old standard, which is still in use. To better understand t
 
 - [x] Refactor attacks and spawners to make more generic code
 
+## Deploy
+
+- [ ] other platforms than Linux
+    - [ ] ? windows build
+    - [ ] ? web build
+- [ ] ? where?
+    - [ ] ? github releases
+    - [ ] ? itch page
+- [ ] better readme
+
 ## UI
 
 - [ ] player hp
