@@ -12,7 +12,7 @@ LIB_DIR := lib
 BIN_DIR := bin
 
 # Generate paths for all object files
-OBJS := $(patsubst %.c,%.o, $(wildcard $(SRC_DIR)/*.c) $(wildcard $(LIB_DIR)/**/*.c))
+OBJS := $(patsubst %.c,%.o, $(wildcard $(SRC_DIR)/*.c) $(wildcard $(SRC_DIR)/systems/*.c) $(wildcard $(LIB_DIR)/**/*.c))
 
 # Compiler settings
 CC := gcc
