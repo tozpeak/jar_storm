@@ -1089,6 +1089,7 @@ bool System_DebugPause()
 
 void System_KillOutOfBounds() 
 {
+    int boundsExtention = (g_level.width * g_level.tileSize.x) / 2;
     int boundsX = g_level.width * g_level.tileSize.x,
         boundsY = g_level.height * g_level.tileSize.y;
     
@@ -1096,10 +1097,10 @@ void System_KillOutOfBounds()
     QueryResult *qr = ecs_query(1, CID_Position);
     for (i = 0; i < qr->count; ++i) {
         PositionComponent *pos = (PositionComponent*)ecs_get(qr->list[i], CID_Position);
-        if (pos->x > boundsX
-         || pos->x < 0
-         || pos->y > boundsY
-         || pos->y < 0
+        if (pos->x > boundsX + boundsExtention
+         || pos->x < - boundsExtention
+         || pos->y > boundsY + boundsExtention
+         || pos->y < - boundsExtention
         ) ecs_add(qr->list[i], CID_IsKilled, NULL);
     }
 }
