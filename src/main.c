@@ -1190,9 +1190,13 @@ int main ()
     //SetTargetFPS(120);
 
     // Create the window and OpenGL context
-    const int screenScale = 2;
+    const float screenScale = 2.f;
+    Vector2Int windowSize = {
+        (int) floor(g_screenSettings.width  * screenScale),
+        (int) floor(g_screenSettings.height * screenScale),
+    };
 
-    InitWindow(g_screenSettings.width * screenScale, g_screenSettings.height * screenScale, "Hello Raylib");
+    InitWindow(windowSize.x, windowSize.y, "Hello Raylib");
     //SetWindowSize(g_screenSettings.width * screenScale, g_screenSettings.height * screenScale);
 
     Vector2 centerScreenOffset = (Vector2){ g_screenSettings.width / 2.f, g_screenSettings.height / 2.f };
