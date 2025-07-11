@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
@@ -48,17 +49,7 @@ bool IsTilePit(int x, int y)
     if (y < 0) return true;
     if (y >= g_level.height) return true;
     
-    if (
-        ((x % 32) >= 30) 
-        && ((y % 12) < 10)
-    ) return true;
-        
-    if (
-        ((y % 32) >= 30) 
-        && ((x % 12) < 10)
-    ) return true;
-    
-    return false;
+    return g_level.tiles[ LVL_INDEX (x,y) ].type < TLT_WALKABLE;
 }
 
 bool IsTilePitV(Vector2Int tPosition)
@@ -124,7 +115,101 @@ void FillAIObstacleByRadius(Vector2 worldPos, float radius)
     }
 }
 
-void Level_Generate()
+void Level_LoadFromFile()
+{
+    FILE *file = fopen("res/test.pbm", "r");
+    
+    char line[16];
+    int c;
+    int w, h;
+    
+    TileInfo *level = g_level.tiles;
+    
+    if (file != NULL) {
+        //skip magic line (P4)
+        if( !fgets(line, sizeof(line), file) ) return;
+        while ( fgetc(file) == '#' ) {
+            //if comment line
+            //skip line
+            while ( true ) {
+                c = fgetc(file);
+                if (c == EOF) return;
+                if (c == '\n') break;
+            }
+        }
+        //rewind first not-comment line symbol
+        fseek(file, -1, SEEK_CUR);
+        
+        if( !fgets(line, sizeof(line), file) ) return;
+        
+        //read data size
+        int res = sscanf(line, "%d %d", &w, &h);
+        
+        if (w != g_level.width
+            || h != g_level.height) return;
+        
+        //suffixes: B = Bytes, b = bits
+        //we need to iterate each line byte by bit
+        int wB = (int)ceil(w / 8.f);
+        
+        for (int y = 0; y < h; ++y) {
+            for (int xB = 0; xB < wB; ++xB) {
+                c = fgetc(file);
+                if(c == EOF) return;
+                
+                for (int xb = 0; xb < 8; ++xb) {
+                    int x = xB*8 + xb;
+                    if(x >= w) break;
+                    
+                    unsigned char mask = 1 << ( 7-xb );
+                    level[ LVL_INDEX(x,y) ].type =
+                        ( (c & mask) == mask )
+                        ? TLT_PIT
+                        : TLT_FLOOR;
+                }
+            }
+        }
+        
+        fclose(file);
+    }
+}
+
+void Level_SetSpawnPoint()
+{
+    for(int i = 0; i < g_level.width; i++) {
+        for(int j = 0; j < g_level.height; j++) {
+            if (g_level.tiles[ LVL_INDEX(i,j) ].type >= TLT_WALKABLE) {
+                g_level.spawnPoint = g_level.tileSize;
+                g_level.spawnPoint.x *= i + 0.5f;
+                g_level.spawnPoint.y *= j + 0.5f;
+                return;
+            }
+        }
+    }
+}
+
+void Level_GenerateTiles()
+{
+    char newTile;
+    for(int i = 0; i < g_level.width; i++) {
+        for(int j = 0; j < g_level.height; j++) {
+            newTile = TLT_FLOOR;
+            
+            if(
+                ((i % 32) >= 30)
+                && ((j % 12) < 10)
+            ) newTile = TLT_PIT;
+            if(
+                ((i % 32) >= 30)
+                && ((j % 12) < 10)
+            ) newTile = TLT_PIT;
+            
+            g_level.tiles[ LVL_INDEX(i,j) ].type = newTile;
+        }
+    }
+}
+
+void Level_GenerateEntities()
 {
     int pillarCount = 6 * 4;
     int interactableCount = 48;
@@ -165,4 +250,12 @@ void Level_Generate()
     /*for (int i = 0; i < 4; i++) {
         Spawn_Interactable( (Vector2) { 96 + i * 4, 96 } );
     }*/
+}
+
+void Level_Setup()
+{
+    Level_LoadFromFile();
+    //Level_GenerateTiles();
+    Level_SetSpawnPoint();
+    Level_GenerateEntities();
 }

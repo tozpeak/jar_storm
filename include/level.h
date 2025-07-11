@@ -15,6 +15,14 @@ typedef struct
     Camera2D *camera;
 } ScreenSettings;
 
+enum TileType
+{
+    TLT_PIT = -127,
+    TLT_OVERHANG = -126,
+    TLT_WALKABLE = 0,
+    TLT_FLOOR = 1,
+};
+
 typedef struct
 {
     char type;
@@ -33,6 +41,7 @@ typedef struct
     int width;
     int height;
     Vector2 tileSize;
+    Vector2 spawnPoint;
     TileInfo* tiles;
     AIMapTile* aiMap;
 } LevelSettings;
@@ -51,4 +60,7 @@ AIMapTile *Level_GetAITileForTilePos(Vector2Int tPos);
 AIMapTile *Level_GetAITileForWorldPos(Vector2 pos);
 bool Level_RandomFreePosInRect(Rectangle* rect, int attempts, Vector2 *result);
 
-void Level_Generate();
+void Level_LoadFromFile();
+void Level_SetSpawnPoint();
+void Level_GenerateEntities();
+void Level_Setup();

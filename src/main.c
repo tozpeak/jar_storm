@@ -1,4 +1,4 @@
-//#include <stdio.h>
+#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <time.h>
@@ -71,6 +71,7 @@ int main ()
     camera->target = (Vector2){ 0 };
     camera->offset = Vector2Scale(centerScreenOffset, screenScale);
     camera->rotation = 0.0f;
+    //camera->zoom = screenScale * g_screenSettings.width / (g_level.width * g_level.tileSize.x);
     camera->zoom = screenScale;
 
 
@@ -79,13 +80,13 @@ int main ()
     Attack_InitConfig();
     
     srand(time(NULL));
+    
+    Level_Setup();
 
     Entity player = Spawn_Player(
-        (Vector2) { 32, 32 },
+        g_level.spawnPoint,
         0
     );
-    
-    Level_Generate();
     
     //SpawnEntireFieldOfEnemies();
 

@@ -118,7 +118,7 @@ void System_FallOutOfVerticalBounds()
             if( j >=0 && !IsPositionInPit(newPos) ) break;
         }
         
-        if( IsPositionInPit(newPos) ) newPos = (Vector2) { 32, 32 };
+        if( IsPositionInPit(newPos) ) newPos = g_level.spawnPoint;
         pos->v2 = newPos;
     }
 }
