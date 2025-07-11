@@ -65,7 +65,7 @@ This project **DOES NOT** have a free license, thus it is **READ ONLY**. Feel fr
 ## Levels & Progression
 
 - [ ] ? where from ? (make decision):
-    - [ ] premade files
+    - [x] (prototype is ready) premade files
     - [ ] generated on the go
 - [ ] ? limited view ? (make decision):
     - [ ] fog of war
