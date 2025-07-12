@@ -23,7 +23,7 @@ typedef struct {
  * to store them. The maximum number of component types is 32, though
  * this could be extended by adding another bitmask and a bit switch.
  */
-void ecs_init(uint32_t component_count, ...);
+void ecs_init(uint32_t component_count, size_t *sizes_arg);
 
 /**
  * Create an entity. Returns a handle which contains the id.
