@@ -7,7 +7,7 @@
 
 void InitComponents() 
 {
-    ecs_init(CID_Count, 
+    size_t sizes[CID_Count] = {
         sizeof(DynamicVector), //CID_Position
         sizeof(DynamicVector), //CID_Velocity
         sizeof(ColliderComponent), 
@@ -47,7 +47,6 @@ void InitComponents()
         
         0, //CID_EventInteraction
         0, //CID_EventKill
-        
-        0 //CID_Count
-    );
+    };
+    ecs_init(CID_Count, sizes);
 }

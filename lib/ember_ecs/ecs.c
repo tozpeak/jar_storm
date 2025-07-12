@@ -34,7 +34,7 @@ typedef struct {
 static State state = {0};
 
 void
-ecs_init(uint32_t n, ...)
+ecs_init(uint32_t n, size_t *sizes_arg)
 {
 	uint32_t i;
 	va_list ap;
@@ -42,13 +42,11 @@ ecs_init(uint32_t n, ...)
 	size_t offsets[32];
 	size_t size = 0;
 
-	va_start(ap, n);
 	for (i = 0; i < n; ++i) {
-		sizes[i] = va_arg(ap, size_t);
+		sizes[i] = sizes_arg[i];
 		offsets[i] = size;
 		size += sizes[i];
 	}
-	va_end(ap);
 
 	state.entity_pool = as_create(sizeof(uint32_t));
 

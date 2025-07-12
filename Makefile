@@ -29,7 +29,7 @@ CC := gcc
 # 	-lm: Link to libm
 #   -Wl,--verbose: verbose linker
 CFLAGS :=  -std=c99 -I./$(INCLUDE_DIR) -L./$(LIB_DIR)
-LDFLAGS := -l:libraylib.a -lGL -lm -lpthread -ldl -lrt -lX11
+LDFLAGS := -l:libraylib.a -lgdi32 -lwinmm
 
 ifeq ($(debug), 1)
 	CFLAGS := $(CFLAGS) -g -O0

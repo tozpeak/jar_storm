@@ -117,7 +117,7 @@ void FillAIObstacleByRadius(Vector2 worldPos, float radius)
 
 void Level_LoadFromFile()
 {
-    FILE *file = fopen("res/test.pbm", "r");
+    FILE *file = fopen("res/test.pbm", "rb");
     
     char line[16];
     int c;
