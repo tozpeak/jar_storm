@@ -15,6 +15,19 @@
 
 #include <systems/gameplay_logic.h>
 
+float RandomFloat()
+{
+    const int RAND_SAMPLE_SIZE = 
+        (100000 > RAND_MAX) 
+        ? RAND_MAX 
+        : 100000;
+    
+    return (
+        (float) (rand() % RAND_SAMPLE_SIZE )
+        / RAND_SAMPLE_SIZE
+    );
+}
+
 bool System_DebugPause()
 {
     static bool isPaused = false;
@@ -351,15 +364,13 @@ void System_EnemyWanderer(float deltaTime)
     SYSTEM_TIMER(deltaTime, timerDuration);
     if(timer_ticks < 1) return;
     
-    const int CHANCE_SAMPLE_SIZE = 100000;
-    float changeDirProbabilityF = (timer_ticks * timerDuration) * 1 / 5; // once in 5 seconds
-    int changeDirProbability = round(CHANCE_SAMPLE_SIZE * changeDirProbabilityF);
+    float probability = (timer_ticks * timerDuration) * 1 / 5; // once in 5 seconds
     VelocityComponent newVel;
     
     uint32_t i;
     QueryResult *qr = ecs_query(2, CID_Velocity, CID_IsWanderer);
     for (i = 0; i < qr->count; ++i) {
-        if (rand() % CHANCE_SAMPLE_SIZE > changeDirProbability) continue;
+        if (RandomFloat() > probability) continue;
         
         VelocityComponent *vel = (VelocityComponent*)ecs_get(qr->list[i], CID_Velocity);
         
@@ -561,12 +572,13 @@ void System_KeepWandererFromObstacles(float delta)
 
 void System_SpawnRandomUnit(float deltaTime)
 {
-    const int CHANCE_SAMPLE_SIZE = 100000;
+    float timerDuration = 0.1f;
+    SYSTEM_TIMER(deltaTime, timerDuration);
+    if(timer_ticks < 1) return;
     
-    float changeDirProbabilityF = deltaTime * 2 / 5;
-    int changeDirProbability = round(CHANCE_SAMPLE_SIZE * changeDirProbabilityF);
+    float probability = (timer_ticks * timerDuration) * 2 / 5;
     
-    if(rand() % CHANCE_SAMPLE_SIZE > changeDirProbability) return;
+    if(RandomFloat() > probability) return;
     
     bool isLizard = (rand() % 4 == 0);
     
