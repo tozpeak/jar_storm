@@ -14,21 +14,9 @@
 #include <systems/gameplay_logic.h>
 #include <systems/gameplay_draw_world.h>
 #include <systems/gameplay_draw_hud.h>
+#include <game_state.h>
 
-
-void SpawnEntireFieldOfEnemies()
-{
-    for (int i = 1; i < 10; i++) {
-        for (int j = 1; j < 8; j++) {
-            Vector2 position = { i * 16 * 4, j * 16 * 4 };
-            bool even = (i % 2 == 0) && (j % 2 == 0);
-            if (even)
-                Spawn_Enemy_Lizard(position);
-            else
-                Spawn_Enemy(position);
-        }
-    }
-}
+bool g_closeTheGame = false;
 
 int test_main();
 
@@ -80,54 +68,21 @@ int main ()
     Attack_InitConfig();
     
     srand(time(NULL));
-    
-    Level_Setup();
 
-    Entity player = Spawn_Player(
-        g_level.spawnPoint,
+    /*Entity player = Spawn_Player(
+        Vector2Zero(),
         0
-    );
+    );*/
     
-    //SpawnEntireFieldOfEnemies();
-
+    GameState_InitStates();
+    GameState_SwitchTo(GST_MAIN);
+    
     // game loop
     while (!WindowShouldClose())        // run the loop untill the user presses ESCAPE or presses the Close button on the window
     {
-        Systems_GameLoop();
+        GameState_LoopCurrent();
         
-        // drawing
-        BeginDrawing();
-        
-        // Setup the back buffer for drawing (clear color and depth buffers)
-        ClearBackground(BACKGROUND_COLOR);
-        
-        ECS_GET_NEW(playerPos, player.id, Position);
-        camera->target = *playerPos;
-        BeginMode2D(*camera);
-        Systems_DrawLoop();
-        EndMode2D();
-        
-        camera->target = centerScreenOffset;
-        BeginMode2D(*camera);
-        Systems_DrawUILoop();
-        EndMode2D();
-        camera->target = *playerPos;
-        
-        DrawFPS(1, 1);
-        DrawText(
-            TextFormat("%d entt", ecs_query(0)->count),
-            1, 24,
-            16, DARKGREEN
-        );
-        
-        DrawText(
-            TextFormat("%d enemies", ecs_query(1, CID_Health)->count),
-            1, 24 * 2,
-            16, DARKGREEN
-        );
-
-        // end the frame and get ready for the next one  (display frame, poll input, etc...)
-        EndDrawing();
+        if(g_closeTheGame) break;
     }
     // destroy the window and cleanup the OpenGL context
     CloseWindow();

@@ -24,6 +24,8 @@ This project **DOES NOT** have a free license, thus it is **READ ONLY**. Feel fr
 
 - [ ] other platforms than Linux
     - [ ] ? windows build
+        - [x] prototype
+        - [ ] **bugfix**
     - [ ] ? web build
 - [ ] ? where?
     - [ ] ? github releases
@@ -64,23 +66,25 @@ This project **DOES NOT** have a free license, thus it is **READ ONLY**. Feel fr
 
 ## Levels & Progression
 
-- [ ] ? where from ? (make decision):
+- [x] where from:
     - [x] (prototype is ready) premade files
-    - [ ] generated on the go
-- [ ] ? limited view ? (make decision):
-    - [ ] fog of war
+    - ~~generated on the go~~
+- [x] limited view:
     - [x] (prototype is ready) level bigger than viewport with moving camera
-    - [ ] segmented level, like rooms in Binding of Isaac
-- [ ] teleporters to the next stage
+    - ~~fog of war~~
+    - ~~segmented level, like rooms in Binding of Isaac~~
+- [ ] **teleporters to the next stage**
+- [ ] **victory state**
 - [ ] boss enemies
 - [ ] pits + jump/fly systems
     - [x] prototype
     - [x] cleanup code
-    - [ ] bugfix
+    - [ ] **bugfix**
 
 ## Main Menu
 
-- [ ] select character
+- [ ] **how to play** (input info)
+- [ ] **select character**
 - [ ] ? select input method
 - [ ] ? highscores
 
@@ -94,7 +98,7 @@ This project **DOES NOT** have a free license, thus it is **READ ONLY**. Feel fr
 
 ## ECS
 
-- [ ] make access for flag components to use entity_store.flag_array (too free some space in bitmask for actual data-containing components)
+- [ ] make **access for flag components** to use entity_store.flag_array (too free some space in bitmask for actual data-containing components)
 - [ ] make more complex queries, for example with option to exclude components
 
 ---

@@ -252,10 +252,27 @@ void Level_GenerateEntities()
     }*/
 }
 
+void SpawnEntireFieldOfEnemies()
+{
+    for (int i = 1; i < 10; i++) {
+        for (int j = 1; j < 8; j++) {
+            Vector2 position = { i * 16 * 4, j * 16 * 4 };
+            bool even = (i % 2 == 0) && (j % 2 == 0);
+            if (even)
+                Spawn_Enemy_Lizard(position);
+            else
+                Spawn_Enemy(position);
+        }
+    }
+}
+
 void Level_Setup()
 {
     Level_LoadFromFile();
     //Level_GenerateTiles();
     Level_SetSpawnPoint();
     Level_GenerateEntities();
+    
+    //SpawnEntireFieldOfEnemies();
+    
 }
