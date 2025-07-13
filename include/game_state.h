@@ -17,7 +17,8 @@ enum GameStateOptions
     GST_COUNT,
 };
 
+void GST_Empty();
+
 void GameState_InitStates();
-void GameState_SwitchToMainMenu();
-void GameState_SwitchToGameplay();
+void GameState_SwitchTo(unsigned char _newState);
 void GameState_LoopCurrent();

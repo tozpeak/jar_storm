@@ -74,7 +74,7 @@ int main ()
     );*/
     
     GameState_InitStates();
-    GameState_SwitchToMainMenu();
+    GameState_SwitchTo(GST_MAIN);
     
     // game loop
     while (!WindowShouldClose())        // run the loop untill the user presses ESCAPE or presses the Close button on the window

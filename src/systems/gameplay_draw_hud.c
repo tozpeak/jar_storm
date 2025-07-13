@@ -118,7 +118,7 @@ void System_DrawHUD_DeathScreen()
             
             ecs_add(playerEnt, CID_PlayerInput, NULL);
         }*/
-        GameState_SwitchToMainMenu();
+        GameState_SwitchTo(GST_MAIN);
     }
 }
 
