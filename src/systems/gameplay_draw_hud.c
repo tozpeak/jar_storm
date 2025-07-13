@@ -6,6 +6,7 @@
 #include <components.h>
 #include <level.h>
 #include <ecs_helpers.h>
+#include <game_state.h>
 
 #include <systems/gameplay_draw_hud.h>
 
@@ -96,7 +97,7 @@ void System_DrawHUD_DeathScreen()
     );
     posVertical += textSize;
     
-    const char *text2 = "[Press ENTER to RESSURECT]";
+    const char *text2 = "[Press ENTER to RESET GAME]";
     DrawText(
         text2,
         ( g_screenSettings.width - MeasureText(text2, textSize) ) / 2,
@@ -107,7 +108,7 @@ void System_DrawHUD_DeathScreen()
     posVertical += textSize;
     
     if( IsKeyPressed(KEY_ENTER) ) {
-        qr = ecs_query(1, CID_PlayerId);
+        /*qr = ecs_query(1, CID_PlayerId);
         uint32_t i;
         for (i = 0; i < qr->count; ++i) {
             uint32_t playerEnt = qr->list[i];
@@ -116,7 +117,8 @@ void System_DrawHUD_DeathScreen()
             hp->hp = hp->maxHp;
             
             ecs_add(playerEnt, CID_PlayerInput, NULL);
-        }
+        }*/
+        GameState_SwitchToMainMenu();
     }
 }
 
