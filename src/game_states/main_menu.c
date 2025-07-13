@@ -164,6 +164,20 @@ void MainMenu_DrawMenu()
             x, y, textHeight,
             (isSelected) ? ORANGE : RED
         );
+        
+        if (isSelected) {
+            DrawPoly(
+                (Vector2) {
+                    x - textHeight * 2 / 3,
+                    y + textHeight/2
+                },
+                3,
+                textHeight / 3,
+                0.f,
+                ORANGE
+            );
+        }
+        
         y += textHeight;
     }
 }
