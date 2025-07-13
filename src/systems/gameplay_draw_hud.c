@@ -97,7 +97,7 @@ void System_DrawHUD_DeathScreen()
     );
     posVertical += textSize;
     
-    const char *text2 = "[Press ENTER to RESET GAME]";
+    const char *text2 = "[Press ENTER to EXIT]";
     DrawText(
         text2,
         ( g_screenSettings.width - MeasureText(text2, textSize) ) / 2,

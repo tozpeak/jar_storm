@@ -16,6 +16,7 @@
 #include <systems/gameplay_draw_hud.h>
 #include <game_state.h>
 
+bool g_closeTheGame = false;
 
 int test_main();
 
@@ -80,6 +81,8 @@ int main ()
     while (!WindowShouldClose())        // run the loop untill the user presses ESCAPE or presses the Close button on the window
     {
         GameState_LoopCurrent();
+        
+        if(g_closeTheGame) break;
     }
     // destroy the window and cleanup the OpenGL context
     CloseWindow();
