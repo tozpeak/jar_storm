@@ -32,6 +32,14 @@ LevelSettings g_level = {
     .tileSize = { 16, 16 },
     .tiles = levelTiles,
     .aiMap = aiMap,
+    .currentLevel = 0,
+};
+
+#define LEVELS_COUNT 3
+char *levelNames[LEVELS_COUNT] = {
+    "level_1",
+    "level_2",
+    "level_3",
 };
 
 Vector2Int GetTilePosition(Vector2 worldPosition)
@@ -88,6 +96,22 @@ bool Level_RandomFreePosInRect(Rectangle* rect, int attempts, Vector2 *result)
     return false;
 }
 
+Vector2 Level_FirstFreePosInLevel()
+{
+    for(int i = 0; i < g_level.width; i++) {
+        for(int j = 0; j < g_level.height; j++) {
+            if (g_level.tiles[ LVL_INDEX(i,j) ].type >= TLT_WALKABLE) {
+                Vector2 freePoint = g_level.tileSize;
+                freePoint.x *= i + 0.5f;
+                freePoint.y *= j + 0.5f;
+                return freePoint;
+            }
+        }
+    }
+    
+    return Vector2Zero();
+}
+
 void FillAIObstacleByRadius(Vector2 worldPos, float radius)
 {
     Vector2 tileSize = g_level.tileSize;
@@ -117,7 +141,14 @@ void FillAIObstacleByRadius(Vector2 worldPos, float radius)
 
 void Level_LoadFromFile()
 {
-    FILE *file = fopen("res/test.pbm", "rb");
+    char levelFileName[32];
+    int levelIndex = g_level.currentLevel % LEVELS_COUNT;
+    sprintf(
+        levelFileName,
+        "res/%s.pbm",
+        levelNames[levelIndex]
+    );
+    FILE *file = fopen(levelFileName, "rb");
     
     char line[16];
     int c;
@@ -174,18 +205,28 @@ void Level_LoadFromFile()
     }
 }
 
-void Level_SetSpawnPoint()
+void Level_SetFixedSpawnPoint()
 {
-    for(int i = 0; i < g_level.width; i++) {
-        for(int j = 0; j < g_level.height; j++) {
-            if (g_level.tiles[ LVL_INDEX(i,j) ].type >= TLT_WALKABLE) {
-                g_level.spawnPoint = g_level.tileSize;
-                g_level.spawnPoint.x *= i + 0.5f;
-                g_level.spawnPoint.y *= j + 0.5f;
-                return;
-            }
-        }
+    g_level.spawnPoint = Level_FirstFreePosInLevel();
+}
+
+void Level_SetRandomSpawnPoint()
+{
+    Vector2 randomPos;
+    
+    Vector2 tileSize = g_level.tileSize;
+    Rectangle levelRect = {
+        0,
+        0,
+        g_level.width * tileSize.x,
+        g_level.height * tileSize.y,
+    };
+    if ( !Level_RandomFreePosInRect(&levelRect, 100, &randomPos) ) {
+        Level_SetFixedSpawnPoint();
+        return;
     }
+    
+    g_level.spawnPoint = randomPos;
 }
 
 void Level_GenerateTiles()
@@ -229,7 +270,6 @@ void Level_GenerateEntities()
         }
     }
 
-    Spawn_Teleporter((Vector2) { levelRect.width - 32, levelRect.height - 32 } );
     //Spawn_RandomItem((Vector2) { 256, 256 } );
     
     Vector2 randomPos;
@@ -246,6 +286,19 @@ void Level_GenerateEntities()
         if( !Level_RandomFreePosInRect(&levelRect, 10, &randomPos) ) continue;
         Spawn_Interactable( randomPos );
     }
+    
+    int attempts = 10;
+    //float spawnMinRadius = 40.f * g_level.tileSize.x;
+    while( attempts > 0 ) {
+        if ( !Level_RandomFreePosInRect(&levelRect, 20, &randomPos) ) {
+            randomPos = Level_FirstFreePosInLevel();
+        }
+        attempts--;
+        
+        bool farEnough = true; //can implement later
+        if ( farEnough ) break;
+    }
+    Spawn_Teleporter( randomPos );
     
     /*for (int i = 0; i < 4; i++) {
         Spawn_Interactable( (Vector2) { 96 + i * 4, 96 } );
@@ -270,9 +323,39 @@ void Level_Setup()
 {
     Level_LoadFromFile();
     //Level_GenerateTiles();
-    Level_SetSpawnPoint();
     Level_GenerateEntities();
+    Level_SetRandomSpawnPoint();
     
     //SpawnEntireFieldOfEnemies();
+}
+
+void Level_NextLevel()
+{
+    uint32_t i;
+    QueryResult *qr = ecs_query(0);
     
+    for(i = 0; i < qr->count; i++) {
+        uint32_t entId = qr->list[i];
+        if (ecs_has(entId, CID_PlayerId)) continue; //is player
+        if (ecs_has(entId, CID_ParentId)) {
+            ECS_GET_NEW(parentId, entId, ParentId);
+            if ( ecs_has(*parentId, CID_PlayerId) ) continue; //is player's child
+        }
+        
+        ecs_add(entId, CID_IsKilled, NULL);
+    }
+    
+    g_level.currentLevel++;
+    Level_Setup();
+    
+    qr = ecs_query(1, CID_PlayerId);
+    
+    for(i = 0; i < qr->count; i++) {
+        uint32_t entId = qr->list[i];
+        ECS_GET_NEW(pos, entId, Position);
+        *pos = g_level.spawnPoint;
+        
+        ECS_GET_NEW(parentId, entId, ParentId);
+        ecs_remove(*parentId, CID_IsKilled); // do not kill player's parent
+    }
 }

@@ -32,7 +32,7 @@ bool System_DebugPause()
 {
     static bool isPaused = false;
     
-    if(IsKeyPressed(KEY_ESCAPE)) isPaused = !isPaused;
+    if(IsKeyPressed(KEY_P)) isPaused = !isPaused;
     return isPaused;
 }
 
@@ -118,6 +118,7 @@ void System_FallOutOfVerticalBounds()
         if( ecs_has(entId, CID_Health) ) {
             ECS_GET_NEW(hp, entId, Health);
             hp->hp -= 16;
+            if(hp->hp <= 0) ecs_add(entId, CID_IsKilled, NULL);
         }
         
         Vector2 newPos = pos->v2;
@@ -299,6 +300,28 @@ void System_PerformAttack()
         
         Attack_Perform( &context );
         ecs_remove(qr->list[i], CID_AttackIntention);
+    }
+}
+
+void System_AutoHealPlayers(float delta)
+{
+    SYSTEM_TIMER(delta, 1.0f);
+    if(timer_ticks < 1) return;
+    
+    short restoreAmount = 1;
+    uint32_t i;
+    QueryResult *qr = ecs_query(2, CID_PlayerId, CID_Health);
+    
+    for (i = 0; i < qr->count; ++i) {
+        uint32_t entId = qr->list[i];
+        
+        ECS_GET_NEW(hp, entId, Health);
+        if (hp->hp <= 0) continue;
+        if (hp->hp >= hp->maxHp) continue;
+        
+        hp->hp += restoreAmount * (short)timer_ticks;
+        if (hp->hp >= hp->maxHp)
+            hp->hp = hp->maxHp;
     }
 }
 
@@ -848,6 +871,7 @@ void Systems_GameLoop()
     System_EvaluateAiAttack();
     System_PlayerInput(delta);
     System_PerformAttack();
+    System_AutoHealPlayers(delta);
     System_DealDamageNew(delta);
     
     System_EnemyWanderer(delta);

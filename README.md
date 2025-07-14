@@ -22,11 +22,11 @@ This project **DOES NOT** have a free license, thus it is **READ ONLY**. Feel fr
 
 ## Deploy
 
-- [ ] other platforms than Linux
-    - [ ] ? windows build
+- [x] other platforms than Linux
+    - [x] windows build
         - [x] prototype
-        - [ ] **bugfix**
-    - [ ] ? web build
+        - [x] **bugfix**
+    - ~~web build~~
 - [ ] ? where?
     - [ ] ? github releases
     - [ ] ? itch page
@@ -83,7 +83,7 @@ This project **DOES NOT** have a free license, thus it is **READ ONLY**. Feel fr
 
 ## Main Menu
 
-- [ ] **how to play** (input info)
+- [x] **how to play** (input info)
 - [ ] **select character**
 - [ ] ? select input method
 - [ ] ? highscores

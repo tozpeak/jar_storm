@@ -44,6 +44,7 @@ typedef struct
     Vector2 spawnPoint;
     TileInfo* tiles;
     AIMapTile* aiMap;
+    int currentLevel;
 } LevelSettings;
 
 extern const ScreenSettings g_screenSettings;
@@ -64,3 +65,4 @@ void Level_LoadFromFile();
 void Level_SetSpawnPoint();
 void Level_GenerateEntities();
 void Level_Setup();
+void Level_NextLevel();
