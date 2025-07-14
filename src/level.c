@@ -312,5 +312,35 @@ void Level_Setup()
     Level_SetRandomSpawnPoint();
     
     //SpawnEntireFieldOfEnemies();
+}
+
+void Level_NextLevel()
+{
+    uint32_t i;
+    QueryResult *qr = ecs_query(0);
     
+    for(i = 0; i < qr->count; i++) {
+        uint32_t entId = qr->list[i];
+        if (ecs_has(entId, CID_PlayerId)) continue; //is player
+        if (ecs_has(entId, CID_ParentId)) {
+            ECS_GET_NEW(parentId, entId, ParentId);
+            if ( ecs_has(*parentId, CID_PlayerId) ) continue; //is player's child
+        }
+        
+        ecs_add(entId, CID_IsKilled, NULL);
+    }
+    
+    //TODO: change level id before calling Setup again
+    Level_Setup();
+    
+    qr = ecs_query(1, CID_PlayerId);
+    
+    for(i = 0; i < qr->count; i++) {
+        uint32_t entId = qr->list[i];
+        ECS_GET_NEW(pos, entId, Position);
+        *pos = g_level.spawnPoint;
+        
+        ECS_GET_NEW(parentId, entId, ParentId);
+        ecs_remove(*parentId, CID_IsKilled); // do not kill player's parent
+    }
 }

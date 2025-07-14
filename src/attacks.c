@@ -1,7 +1,9 @@
 #include <ecs.h>
+#include <ecs_helpers.h>
 #include <components.h>
 #include <spawners.h>
 #include <physics.h>
+#include <level.h>
 
 #include <attacks.h>
 
@@ -209,6 +211,54 @@ void Perform_EventSpawnRandomItem(AttackContext *context)
     ecs_add(*targetId, CID_IsKilled, NULL);
 }
 
+void Perform_EventActivateTeleporter(AttackContext *context)
+{
+    if( !IsEventInteraction(context) ) return;
+    
+    uint32_t eventEntId = context->entityId;
+    TargetIdComponent *targetId = (TargetIdComponent*) ecs_get(eventEntId, CID_TargetId);
+    
+    //enable existing CID_DealDamage
+    ECS_GET_NEW(dam, *targetId, DealDamage);
+    ecs_add(*targetId, CID_DealDamage, dam );
+    ecs_add(*targetId, CID_HasHpBar, NULL );
+    ecs_add(*targetId, CID_AiAttack, NULL );
+    
+    ECS_GET_NEW(primAtt, *targetId, PrimaryAttack);
+    primAtt->attackId = ATK_ID_EVENT_CHARGE_TELEPORTER;
+    ECS_GET_NEW(col, *targetId, Collider);
+    col->shape.circle.radius = 16 * 12; //teleporter activation radius
+    
+    ecs_remove(*targetId, CID_IsInteractable);
+}
+
+float AiPriority_EventChargeTeleporter(AttackContext *context)
+{
+    ECS_GET_NEW(hp, context->entityId, Health);
+    return (hp->hp >= hp->maxHp) ? 1.f : 0.f;
+}
+void Perform_EventChargeTeleporter(AttackContext *context)
+{
+    uint32_t *targetId = &(context->entityId);
+    
+    ecs_remove(*targetId, CID_DealDamage);
+    ecs_remove(*targetId, CID_HasHpBar);
+    ecs_add(*targetId, CID_IsInteractable, NULL);
+    
+    ECS_GET_NEW(primAtt, *targetId, PrimaryAttack);
+    primAtt->attackId = ATK_ID_EVENT_ENTER_TELEPORTER;
+    ECS_GET_NEW(draw, *targetId, DrawShape);
+    ECS_GET_NEW(col, *targetId, Collider);
+    draw->color = GREEN;
+    col->shape.circle.radius = draw->shape.circle.radius;
+    
+}
+
+void Perform_EventEnterTeleporter(AttackContext *context) 
+{
+    Level_NextLevel();
+}
+
 float AiPriority_EventInteraction(AttackContext *context)
 {
     //EventInteraction "attacks" are performed by interactions module 
@@ -298,6 +348,21 @@ void Attack_InitConfig()
     configArr[ATK_ID_EVENT_GIVE_RANDOM_ITEM] = (AttackConfig){
         .cooldownTime = 0.0f,
         .performStrategy = Perform_EventSpawnRandomItem,
+        .aiPriorityStrategy = AiPriority_EventInteraction,
+    };
+    configArr[ATK_ID_EVENT_ACTIVATE_TELEPORTER] = (AttackConfig){
+        .cooldownTime = 0.0f,
+        .performStrategy = Perform_EventActivateTeleporter,
+        .aiPriorityStrategy = AiPriority_EventInteraction,
+    };
+    configArr[ATK_ID_EVENT_CHARGE_TELEPORTER] = (AttackConfig){
+        .cooldownTime = 0.0f,
+        .performStrategy = Perform_EventChargeTeleporter,
+        .aiPriorityStrategy = AiPriority_EventChargeTeleporter,
+    };
+    configArr[ATK_ID_EVENT_ENTER_TELEPORTER] = (AttackConfig){
+        .cooldownTime = 0.0f,
+        .performStrategy = Perform_EventEnterTeleporter,
         .aiPriorityStrategy = AiPriority_EventInteraction,
     };
 }

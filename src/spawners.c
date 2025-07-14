@@ -125,24 +125,28 @@ uint32_t Spawn_Pillar(Vector2 position)
 uint32_t Spawn_Teleporter(Vector2 position) 
 {
     float radius = 6.0f;
-    float triggerRadius = 16 * 12;
+    //float triggerRadius = 16 * 12;
     Entity e = ecs_create();
     PositionComponent pos = position;
     
     DrawShapeComponent shape = { RED, Shapes_NewCircle(Vector2Zero(), radius) };
     ColliderComponent col = { 
-        Shapes_NewCircle(Vector2Zero(), triggerRadius), 
+        Shapes_NewCircle(Vector2Zero(), radius), 
         (Layer)LN_PL_TRIGGER
     };
-    HealthComponent hp = { 100, 100 };
-    DealDamageComponent dam = { 1, DMG_TARGET_SELF | DMG_ON_TICK };
+    HealthComponent hp = { 1, 100 };
+    DealDamageComponent dam = { -1, DMG_TARGET_SELF | DMG_ON_TICK };
+    PrimaryAttackComponent primAtt = { .attackId = ATK_ID_EVENT_ACTIVATE_TELEPORTER };
     
     ecs_add(e.id, CID_Position, &pos );
     ecs_add(e.id, CID_DrawShape, &shape );
     ecs_add(e.id, CID_Collider, &col );
     ecs_add(e.id, CID_Health, &hp );
     ecs_add(e.id, CID_DealDamage, &dam );
-    ecs_add(e.id, CID_HasHpBar, NULL );
+    ecs_add(e.id, CID_PrimaryAttack, &primAtt );
+    ecs_add(e.id, CID_IsInteractable, NULL );
+    
+    ecs_remove(e.id, CID_DealDamage); //disable the component
     
     return e.id;
 }

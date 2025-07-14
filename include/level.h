@@ -64,3 +64,4 @@ void Level_LoadFromFile();
 void Level_SetSpawnPoint();
 void Level_GenerateEntities();
 void Level_Setup();
+void Level_NextLevel();
