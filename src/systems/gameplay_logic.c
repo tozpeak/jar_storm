@@ -32,7 +32,7 @@ bool System_DebugPause()
 {
     static bool isPaused = false;
     
-    if(IsKeyPressed(KEY_ESCAPE)) isPaused = !isPaused;
+    if(IsKeyPressed(KEY_P)) isPaused = !isPaused;
     return isPaused;
 }
 

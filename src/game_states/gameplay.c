@@ -6,16 +6,57 @@
 
 #include <components.h>
 #include <level.h>
+#include <menu.h>
 #include <spawners.h>
 #include <ecs_helpers.h>
 #include <systems/gameplay_logic.h>
 #include <systems/gameplay_draw_world.h>
 #include <systems/gameplay_draw_hud.h>
+#include <game_state.h>
 
 #include <game_states/gameplay.h>
 
+void MenuAction_Pause_Continue();
+void MenuAction_Pause_ExitToMain();
+
+#define PAUSE_OPTIONS_COUNT 2
+MenuOption pause_options[PAUSE_OPTIONS_COUNT] = {
+    (MenuOption) { "Continue", MenuAction_Pause_Continue },
+    (MenuOption) { "Exit to Main", MenuAction_Pause_ExitToMain },
+};
+
+MenuConfig pauseMenu = {
+    .header = "Pause",
+    .menuCount = PAUSE_OPTIONS_COUNT,
+    .options = pause_options,
+};
+
+MenuState pauseMenuState = {
+    .menu = &pauseMenu,
+    .currentOption = 0,
+};
+
+bool isPauseActive;
+
+void DrawDebugInfo()
+{
+    DrawFPS(1, 1);
+    DrawText(
+        TextFormat("%d entt", ecs_query(0)->count),
+        1, 24,
+        16, DARKGREEN
+    );
+    
+    DrawText(
+        TextFormat("%d enemies", ecs_query(1, CID_Health)->count),
+        1, 24 * 2,
+        16, DARKGREEN
+    );
+}
+
 void GST_Gameplay_OnEnter()
 {
+    isPauseActive = false;
     Level_Setup();
     
     //create player or set it in new spawn point
@@ -41,7 +82,7 @@ void GST_Gameplay_OnLoop()
         .id = qr->list[0],
     };
     
-    Systems_GameLoop();
+    if(!isPauseActive) Systems_GameLoop();
     
     // drawing
     BeginDrawing();
@@ -58,24 +99,29 @@ void GST_Gameplay_OnLoop()
     camera->target = centerScreenOffset;
     BeginMode2D(*camera);
     Systems_DrawUILoop();
+    
+    if(isPauseActive) {
+        DrawRectangle(
+            0, 0,
+            g_screenSettings.width, g_screenSettings.height,
+            SHADE_UI_COLOR
+        );
+        Menu_DrawMenu(&pauseMenuState);
+    }
+    
     EndMode2D();
     camera->target = *playerPos;
     
-    DrawFPS(1, 1);
-    DrawText(
-        TextFormat("%d entt", ecs_query(0)->count),
-        1, 24,
-        16, DARKGREEN
-    );
-    
-    DrawText(
-        TextFormat("%d enemies", ecs_query(1, CID_Health)->count),
-        1, 24 * 2,
-        16, DARKGREEN
-    );
+    if (!isPauseActive) DrawDebugInfo();
 
     // end the frame and get ready for the next one  (display frame, poll input, etc...)
     EndDrawing();
+    
+    if (!isPauseActive && IsKeyPressed(KEY_ESCAPE)) {
+        isPauseActive = true;
+        pauseMenuState.currentOption = 0;
+    }
+    if (isPauseActive) Menu_ProcessInput(&pauseMenuState);
 }
 
 void GST_Gameplay_OnExit()
@@ -100,4 +146,14 @@ GameStateConfig GST_Gameplay_Create()
         .onLoop  = GST_Gameplay_OnLoop,
         .onExit  = GST_Gameplay_OnExit,
     };
+}
+
+
+void MenuAction_Pause_Continue()
+{
+    isPauseActive = false;
+}
+void MenuAction_Pause_ExitToMain()
+{
+    GameState_SwitchTo(GST_MAIN);
 }
