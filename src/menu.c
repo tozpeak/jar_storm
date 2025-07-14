@@ -1,9 +1,6 @@
-#include <stdio.h>
-#include <stdint.h>
+#include <stdlib.h>
 #include <raylib.h>
-#include <raymath.h>
 
-#include <level.h>
 #include <menu.h>
 
 void Menu_ProcessInput(MenuState *state)
