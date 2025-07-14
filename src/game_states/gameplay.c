@@ -57,6 +57,7 @@ void DrawDebugInfo()
 void GST_Gameplay_OnEnter()
 {
     isPauseActive = false;
+    g_level.currentLevel = 0;
     Level_Setup();
     
     //create player or set it in new spawn point

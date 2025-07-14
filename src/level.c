@@ -32,6 +32,14 @@ LevelSettings g_level = {
     .tileSize = { 16, 16 },
     .tiles = levelTiles,
     .aiMap = aiMap,
+    .currentLevel = 0,
+};
+
+#define LEVELS_COUNT 3
+char *levelNames[LEVELS_COUNT] = {
+    "level_1",
+    "level_2",
+    "level_3",
 };
 
 Vector2Int GetTilePosition(Vector2 worldPosition)
@@ -133,7 +141,14 @@ void FillAIObstacleByRadius(Vector2 worldPos, float radius)
 
 void Level_LoadFromFile()
 {
-    FILE *file = fopen("res/test.pbm", "rb");
+    char levelFileName[32];
+    int levelIndex = g_level.currentLevel % LEVELS_COUNT;
+    sprintf(
+        levelFileName,
+        "res/%s.pbm",
+        levelNames[levelIndex]
+    );
+    FILE *file = fopen(levelFileName, "rb");
     
     char line[16];
     int c;
@@ -330,7 +345,7 @@ void Level_NextLevel()
         ecs_add(entId, CID_IsKilled, NULL);
     }
     
-    //TODO: change level id before calling Setup again
+    g_level.currentLevel++;
     Level_Setup();
     
     qr = ecs_query(1, CID_PlayerId);

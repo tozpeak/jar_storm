@@ -44,6 +44,7 @@ typedef struct
     Vector2 spawnPoint;
     TileInfo* tiles;
     AIMapTile* aiMap;
+    int currentLevel;
 } LevelSettings;
 
 extern const ScreenSettings g_screenSettings;
