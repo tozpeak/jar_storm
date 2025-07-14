@@ -63,7 +63,7 @@ void Menu_DrawMenu(MenuState *state)
             subtext,
             x, y, textHeight, GRAY
         );
-        y += textHeight * lineCount;
+        y += (textHeight + 2) * lineCount;
     }
     
     textHeight = 24;

@@ -48,7 +48,15 @@ MenuConfig howTo = {
                 "[Left Mouse] to attack\n"
                 "[Right Mouse] to use alternative attack\n"
                 "[Space] to jump\n"
-                "[Esc] for pause\n",
+                "[Esc] for pause\n"
+                "\n"
+                "Enemies and small blue orbs contain coins.\n"
+                "Big blue orbs contain items, you spend coins to open them.\n"
+                "\n"
+                "Big red orb is a teleporter, you need to interact with it.\n"
+                "It will charge while you are near enough.\n"
+                "Then it turns green, which means it is active.\n"
+                "Interact with green teleporter to enter next level.\n",
     .menuCount = 1,
     .options = howTo_options,
 };
