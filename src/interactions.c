@@ -140,6 +140,7 @@ void System_PerformInteraction()
 
 void System_DrawInteractableForPlayer()
 {
+    Vector2 hintOffset = { 0, 6 };
     Entity player = { 0 };
     Entity interactable = { 0 };
     uint32_t i;
@@ -160,6 +161,15 @@ void System_DrawInteractableForPlayer()
             : 6;
         
         DrawCircleLinesV(*interPos, radius, INTERACTION_COLOR);
+        
+        Vector2 hintPos = Vector2Add (*interPos, hintOffset);
+        
+        DrawText(
+            "[E] to interact",
+            hintPos.x,
+            hintPos.y,
+            8, INTERACTION_COLOR
+        );
     }
 }
 
