@@ -29,9 +29,9 @@ This project **DOES NOT** have a free license, thus it is **READ ONLY**. Feel fr
         - [x] prototype
         - [x] **bugfix**
     - ~~web build~~
-- [ ] ? where?
-    - [ ] ? github releases
-    - [ ] ? itch page
+- [x] where
+    - [x] github releases
+    - ~~itch page~~
 - [ ] better readme
 
 ## UI
@@ -75,7 +75,7 @@ This project **DOES NOT** have a free license, thus it is **READ ONLY**. Feel fr
     - [x] (prototype is ready) level bigger than viewport with moving camera
     - ~~fog of war~~
     - ~~segmented level, like rooms in Binding of Isaac~~
-- [ ] **teleporters to the next stage**
+- [x] teleporters to the next stage
 - [ ] **victory state**
 - [ ] boss enemies
 - [ ] pits + jump/fly systems
@@ -85,7 +85,7 @@ This project **DOES NOT** have a free license, thus it is **READ ONLY**. Feel fr
 
 ## Main Menu
 
-- [x] **how to play** (input info)
+- [x] how to play (input info)
 - [ ] **select character**
 - [ ] ? select input method
 - [ ] ? highscores
